@@ -8,3 +8,7 @@ https://www.youtube.com/watch?v=TlB_eWDSMt4&t=1718s
 10-09-25
 
 Hoy instale las dependencias y empece a escribir un poco del codigo
+
+11-09-25
+
+Termine la issue #1
