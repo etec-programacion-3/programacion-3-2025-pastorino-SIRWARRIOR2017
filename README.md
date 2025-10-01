@@ -12,3 +12,8 @@ Hoy instale las dependencias y empece a escribir un poco del codigo
 11-09-25
 
 Termine la issue #1
+
+
+01-10-25
+
+Revise algunas cosas que pense que estaban mal de la issue 1 y estoy empezando la issue 2
