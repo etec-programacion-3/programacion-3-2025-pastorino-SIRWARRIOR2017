@@ -7,7 +7,8 @@
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
     "migrate": "npx sequelize-cli db:migrate",
-    "seed": "npx sequelize-cli db:seed:all"
+    "seed": "node src/seeders/seedData.js",
+    "seed:all": "npx sequelize-cli db:seed:all"
   },
   "dependencies": {
     "express": "^4.18.2",
@@ -24,6 +25,6 @@
     "sequelize-cli": "^6.6.2"
   },
   "keywords": ["backend", "express", "sequelize", "pc-store"],
-  "author": "Joaquin Pastorino",
+  "author": "Tu nombre",
   "license": "ISC"
 }
