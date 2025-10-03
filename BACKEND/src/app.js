@@ -13,12 +13,21 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// ============ IMPORTAR RUTAS ============
+const productRoutes = require('./routes/products');
+const categoryRoutes = require('./routes/categories');
+
 // ============ RUTAS BÁSICAS ============
 app.get('/', (req, res) => {
   res.json({
     message: 'PC Store Backend API',
     version: '1.0.0',
-    status: 'running'
+    status: 'running',
+    endpoints: {
+      products: '/api/products',
+      categories: '/api/categories',
+      health: '/health'
+    }
   });
 });
 
