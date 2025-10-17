@@ -14,10 +14,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ============ IMPORTAR RUTAS ============
+const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/products');
 const categoryRoutes = require('./routes/categories');
-const authRoutes = require('./routes/auth');
-const authMiddleware = require('./middleware/authMiddleware');
 
 // ============ RUTAS BÁSICAS ============
 app.get('/', (req, res) => {
@@ -40,6 +39,10 @@ app.get('/health', (req, res) => {
     database: 'Connected'
   });
 });
+
+// ============ RUTAS DE LA API ============
+app.use('/api/products', productRoutes);
+app.use('/api/categories', categoryRoutes);
 
 // ============ RUTA DE PRUEBA DE MODELOS ============
 app.get('/test-models', async (req, res) => {
@@ -78,19 +81,6 @@ app.get('/test-models', async (req, res) => {
       details: error.message
     });
   }
-});
-
-// Rutas de autenticación
-app.use('/api/products', productRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/auth', authRoutes);
-
-// Ejemplo de ruta protegida: perfil de usuario
-app.get('/api/users/profile', authMiddleware, async (req, res) => {
-  res.json({
-    message: 'Perfil de usuario protegido',
-    user: req.user
-  });
 });
 
 // ============ MANEJO DE ERRORES ============
