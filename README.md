@@ -212,5 +212,3 @@ const res = await fetch(`${API_URL}/api/auth/me`, {
 - Añadir tests automáticos para `/api/auth` y `/api/products`.
 - Preparar un script npm para seed+start (por ejemplo `npm run start:seed`).
 - Documentar más endpoints (orders, orderItems, serviceRequests) con ejemplos.
-
-
