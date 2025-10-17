@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/productController');
 const { validateProduct, validateProductUpdate } = require('../validators/productValidator');
+const { authenticate, isAdmin } = require('../middleware/authMiddleware');
 
 // ============ RUTAS PÚBLICAS ============
 
@@ -12,19 +13,17 @@ router.get('/', productController.getAllProducts);
 router.get('/:id', productController.getProductById);
 
 // ============ RUTAS ADMIN (protegidas) ============
-// Nota: La autenticación real se implementará en Issue #3
-// Por ahora son accesibles, pero están marcadas como admin
 
 // POST /api/products - Crear producto (ADMIN)
-router.post('/', validateProduct, productController.createProduct);
+router.post('/', authenticate, isAdmin, validateProduct, productController.createProduct);
 
 // PUT /api/products/:id - Actualizar producto (ADMIN)
-router.put('/:id', validateProductUpdate, productController.updateProduct);
+router.put('/:id', authenticate, isAdmin, validateProductUpdate, productController.updateProduct);
 
 // DELETE /api/products/:id - Eliminar producto (ADMIN)
-router.delete('/:id', productController.deleteProduct);
+router.delete('/:id', authenticate, isAdmin, productController.deleteProduct);
 
 // PATCH /api/products/:id/stock - Actualizar solo stock (ADMIN)
-router.patch('/:id/stock', productController.updateStock);
+router.patch('/:id/stock', authenticate, isAdmin, productController.updateStock);
 
 module.exports = router;
