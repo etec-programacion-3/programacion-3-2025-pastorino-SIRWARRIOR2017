@@ -2,7 +2,42 @@ const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
 
 const OrderItem = sequelize.define('OrderItem', {
-  // ... campos del OrderItem
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  orderId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'Orders',
+      key: 'id'
+    }
+  },
+  productId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'Products',
+      key: 'id'
+    }
+  },
+  quantity: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    validate: { min: 1 }
+  },
+  unitPrice: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    validate: { min: 0 }
+  },
+  subtotal: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0
+  }
 }, {
   hooks: {
     beforeCreate: (orderItem) => {

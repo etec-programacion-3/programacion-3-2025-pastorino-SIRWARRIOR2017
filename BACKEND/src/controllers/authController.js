@@ -1,73 +1,43 @@
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const { User } = require('../models');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
+const register = async (req, res) => {
+  try {
+    // usar 'name' en lugar de 'username' para coincidir con el modelo User
+    const { name, email, password, role } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'name, email and password are required' });
+    }
+    const existing = await User.findOne({ where: { email } });
+    if (existing) return res.status(409).json({ error: 'Email already in use' });
 
-module.exports = {
-  register: async (req, res) => {
-    try {
-      const { name, email, password } = req.body;
-      if (!name || !email || !password) return res.status(400).json({ error: 'Faltan datos' });
-      // El hook en el modelo se encargará de hashear la contraseña
-      const user = await User.create({ name, email, password });
-      res.status(201).json({ message: 'Usuario creado', user: user.toPublicJSON() });
-    } catch (err) {
-      res.status(500).json({ error: 'Error al registrar usuario' });
-    }
-  },
-  login: async (req, res) => {
-    try {
-      const { email, password } = req.body;
-      if (!email || !password) return res.status(400).json({ error: 'Faltan datos' });
-      const user = await User.findOne({ where: { email } });
-      if (!user) return res.status(401).json({ error: 'Credenciales inválidas' });
-      const valid = await user.validatePassword(password);
-      if (!valid) return res.status(401).json({ error: 'Credenciales inválidas' });
-      const token = jwt.sign({ id: user.id, name: user.name, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '1h' });
-      res.json({ token });
-    } catch (err) {
-      res.status(500).json({ error: 'Error al iniciar sesión' });
-    }
-  }
-  ,
-  getProfile: async (req, res) => {
-    try {
-      // Si el middleware authenticate puso el usuario en req.user, lo devolvemos
-      if (!req.user) return res.status(401).json({ error: 'No autenticado' });
-      const user = await User.findByPk(req.user.id, { attributes: { exclude: ['password'] } });
-      if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
-      res.json({ user });
-    } catch (err) {
-      res.status(500).json({ error: 'Error al obtener perfil' });
-    }
-  },
-  updateProfile: async (req, res) => {
-    try {
-      if (!req.user) return res.status(401).json({ error: 'No autenticado' });
-      const user = await User.findByPk(req.user.id);
-      if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
-      // Actualizamos campos permitidos
-      const { username, email } = req.body;
-      if (username) user.username = username;
-      if (email) user.email = email;
-      await user.save();
-      res.json({ message: 'Perfil actualizado', user: { id: user.id, username: user.username, email: user.email } });
-    } catch (err) {
-      res.status(500).json({ error: 'Error al actualizar perfil' });
-    }
-  },
-  refreshToken: async (req, res) => {
-    try {
-      if (!req.user) return res.status(401).json({ error: 'No autenticado' });
-      const token = jwt.sign({ id: req.user.id, username: req.user.username }, JWT_SECRET, { expiresIn: '1h' });
-      res.json({ token });
-    } catch (err) {
-      res.status(500).json({ error: 'Error al renovar token' });
-    }
-  },
-  logout: async (req, res) => {
-    // En este ejemplo no hay token blacklist; devolvemos 200 para indicar éxito
-    res.json({ message: 'Sesión cerrada' });
+    const hashed = await bcrypt.hash(password, 10);
+    const user = await User.create({ name, email, password: hashed, role: role || 'user' });
+
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
+    return res.status(201).json({ user: { id: user.id, name: user.name, email: user.email, role: user.role }, token });
+  } catch (err) {
+    return res.status(500).json({ error: 'Registration failed', details: err.message });
   }
 };
+
+const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: 'email and password required' });
+
+    const user = await User.findOne({ where: { email } });
+    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
+
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
+    return res.json({ user: { id: user.id, name: user.name, email: user.email, role: user.role }, token });
+  } catch (err) {
+    return res.status(500).json({ error: 'Login failed', details: err.message });
+  }
+};
+
+module.exports = { register, login };

@@ -17,6 +17,11 @@ app.use(express.urlencoded({ extended: true }));
 const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/products');
 const categoryRoutes = require('./routes/categories');
+const userRoutes = require('./routes/users');
+const orderRoutes = require('./routes/orders');
+const orderItemRoutes = require('./routes/orderItems');
+const serviceRequestRoutes = require('./routes/serviceRequests');
+const cartRoutes = require('./routes/cart');
 
 // ============ RUTAS BÁSICAS ============
 app.get('/', (req, res) => {
@@ -32,55 +37,40 @@ app.get('/', (req, res) => {
   });
 });
 
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    database: 'Connected'
-  });
+app.get('/health', async (req, res) => {
+  try {
+    await testConnection();
+    res.json({
+      status: 'OK',
+      timestamp: new Date().toISOString(),
+      database: 'Connected'
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: 'ERROR',
+      timestamp: new Date().toISOString(),
+      database: 'Disconnected',
+      details: err.message
+    });
+  }
 });
 
 // ============ RUTAS DE LA API ============
+app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/order-items', orderItemRoutes);
+app.use('/api/service-requests', serviceRequestRoutes);
+app.use('/api/cart', cartRoutes);
 
-// ============ RUTA DE PRUEBA DE MODELOS ============
-app.get('/test-models', async (req, res) => {
-  try {
-    // Verificar que todos los modelos estén correctamente definidos
-    const modelTest = {
-      User: !!models.User,
-      Category: !!models.Category,
-      Product: !!models.Product,
-      Order: !!models.Order,
-      OrderItem: !!models.OrderItem,
-      ServiceRequest: !!models.ServiceRequest
-    };
-
-    // Contar registros en cada tabla (si existen)
-    const counts = {};
-    try {
-      counts.users = await models.User.count();
-      counts.categories = await models.Category.count();
-      counts.products = await models.Product.count();
-      counts.orders = await models.Order.count();
-      counts.orderItems = await models.OrderItem.count();
-      counts.serviceRequests = await models.ServiceRequest.count();
-    } catch (error) {
-      counts.error = 'Tables might not be created yet. Run sync first.';
-    }
-
-    res.json({
-      message: 'Model test results',
-      models: modelTest,
-      counts
-    });
-  } catch (error) {
-    res.status(500).json({
-      error: 'Error testing models',
-      details: error.message
-    });
-  }
+// 404 Handler
+app.use('*', (req, res) => {
+  res.status(404).json({
+    error: 'Route not found',
+    path: req.originalUrl
+  });
 });
 
 // ============ MANEJO DE ERRORES ============
@@ -89,14 +79,6 @@ app.use((err, req, res, next) => {
   res.status(500).json({
     error: 'Something went wrong!',
     message: err.message
-  });
-});
-
-// 404 Handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    error: 'Route not found',
-    path: req.originalUrl
   });
 });
 
