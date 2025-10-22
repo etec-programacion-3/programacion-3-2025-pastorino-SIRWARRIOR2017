@@ -2,7 +2,37 @@ const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
 
 const Order = sequelize.define('Order', {
-  // ... campos del Order
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  orderNumber: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'Users',
+      key: 'id'
+    }
+  },
+  status: {
+    type: DataTypes.ENUM('pending', 'paid', 'shipped', 'cancelled'),
+    defaultValue: 'pending'
+  },
+  total: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    defaultValue: 0
+  },
+  address: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  }
 });
 
 Order.generateOrderNumber = () => {
