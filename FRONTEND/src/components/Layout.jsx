@@ -1,14 +1,15 @@
 import { Outlet } from 'react-router-dom';
 import Header from './Header';
+import PageContainer from './PageContainer';
 
 const Layout = () => {
   return (
-    <div>
+    <>
       <Header />
-      <main style={{ padding: '20px' }}>
+      <PageContainer>
         <Outlet />
-      </main>
-    </div>
+      </PageContainer>
+    </>
   );
 };
 

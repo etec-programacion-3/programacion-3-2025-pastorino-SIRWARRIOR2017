@@ -1,13 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import { Container, Typography, Card, CardMedia, CardContent, Box } from '@mui/material';
 import { getProductById } from '../services/api';
+import CartContext from '../contexts/CartContext';
 
 const ProductDetail = () => {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { addItem } = useContext(CartContext);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -54,6 +56,15 @@ const ProductDetail = () => {
             <Typography variant="subtitle1">
               Stock disponible: {product.stock}
             </Typography>
+            <div style={{ marginTop: 12 }}>
+              <button
+                onClick={() => {
+                  addItem(product, 1);
+                }}
+              >
+                Agregar al carrito
+              </button>
+            </div>
           </CardContent>
         </Box>
       </Card>
