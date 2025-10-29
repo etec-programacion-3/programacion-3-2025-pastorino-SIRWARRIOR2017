@@ -9,7 +9,14 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ============ MIDDLEWARES ============
-app.use(cors());
+// Configurar CORS para permitir el frontend y credenciales cuando sea necesario
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+app.use(
+  cors({
+    origin: FRONTEND_URL,
+    credentials: true,
+  }),
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
