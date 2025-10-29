@@ -8,6 +8,11 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import TechnicalService from './pages/TechnicalService';
 
+// User Pages
+import Profile from './pages/user/Profile';
+import OrderHistory from './pages/user/OrderHistory';
+import ServiceHistory from './pages/user/ServiceHistory';
+
 function App() {
   return (
     <BrowserRouter>
@@ -20,6 +25,11 @@ function App() {
           <Route path="technical-service" element={<TechnicalService />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
+          
+          {/* User Routes */}
+          <Route path="profile" element={<Profile />} />
+          <Route path="orders" element={<OrderHistory />} />
+          <Route path="service-history" element={<ServiceHistory />} />
         </Route>
       </Routes>
     </BrowserRouter>
