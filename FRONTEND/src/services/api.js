@@ -21,6 +21,24 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Interceptor para detectar usuarios bloqueados
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Si el error es 403 y el mensaje indica cuenta bloqueada
+    if (error.response?.status === 403 && error.response?.data?.error === 'Account blocked') {
+      // Emitir evento personalizado para que AuthContext lo detecte
+      window.dispatchEvent(new CustomEvent('user-blocked', {
+        detail: {
+          message: error.response.data.message,
+          reason: error.response.data.reason
+        }
+      }));
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const getProducts = async () => {
   try {
     const response = await api.get('/products');

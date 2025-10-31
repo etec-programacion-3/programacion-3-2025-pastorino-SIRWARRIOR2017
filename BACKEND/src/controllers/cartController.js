@@ -5,8 +5,40 @@ module.exports = {
   getCart: async (req, res) => {
     try {
       const userId = req.user.id;
-      const items = await CartItem.findAll({ where: { userId }, include: [Product] });
-      res.json(items);
+      const items = await CartItem.findAll({
+        where: { userId },
+        include: [{
+          model: Product,
+          attributes: ['id', 'name', 'price', 'stock', 'images', 'brand', 'isActive']
+        }]
+      });
+
+      // Calcular totales
+      let subtotal = 0;
+      const validItems = [];
+
+      for (const item of items) {
+        if (item.Product && item.Product.isActive) {
+          const itemTotal = parseFloat(item.Product.price) * item.quantity;
+          subtotal += itemTotal;
+          validItems.push(item);
+        }
+      }
+
+      const tax = subtotal * 0.16; // 16% IVA
+      const shipping = subtotal > 1000 ? 0 : 50;
+      const total = subtotal + tax + shipping;
+
+      res.json({
+        items: validItems,
+        summary: {
+          subtotal,
+          tax,
+          shipping,
+          total,
+          itemCount: validItems.reduce((sum, item) => sum + item.quantity, 0)
+        }
+      });
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: 'Cannot fetch cart', details: err.message });
@@ -43,6 +75,43 @@ module.exports = {
     }
   },
 
+  // PUT /api/cart/:id - Actualizar cantidad de item en carrito
+  updateCartItem: async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      const { quantity } = req.body;
+
+      if (!quantity || quantity < 1) {
+        return res.status(400).json({ error: 'Valid quantity required' });
+      }
+
+      const item = await CartItem.findOne({
+        where: { id, userId },
+        include: [Product]
+      });
+
+      if (!item) {
+        return res.status(404).json({ error: 'Cart item not found' });
+      }
+
+      if (quantity > item.Product.stock) {
+        return res.status(400).json({
+          error: 'Not enough stock available',
+          available: item.Product.stock
+        });
+      }
+
+      item.quantity = quantity;
+      await item.save();
+
+      res.json(item);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Cannot update cart item', details: err.message });
+    }
+  },
+
   // DELETE /api/cart/:id - Eliminar item del carrito por id
   removeFromCart: async (req, res) => {
     try {
@@ -51,10 +120,22 @@ module.exports = {
       const item = await CartItem.findOne({ where: { id, userId } });
       if (!item) return res.status(404).json({ error: 'Cart item not found' });
       await item.destroy();
-      res.json({ success: true });
+      res.json({ success: true, message: 'Item removed from cart' });
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: 'Cannot remove item', details: err.message });
+    }
+  },
+
+  // DELETE /api/cart - Vaciar carrito completo
+  clearCart: async (req, res) => {
+    try {
+      const userId = req.user.id;
+      await CartItem.destroy({ where: { userId } });
+      res.json({ success: true, message: 'Cart cleared successfully' });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Cannot clear cart', details: err.message });
     }
   }
 };

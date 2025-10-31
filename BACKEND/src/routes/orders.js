@@ -4,10 +4,19 @@ const orderController = require('../controllers/orderController');
 const orderValidator = require('../validators/orderValidator');
 const { authenticate } = require('../middleware/authMiddleware');
 
-router.get('/', orderController.getAllOrders);
-router.get('/:id', orderController.getOrderById);
+// GET /api/orders - Obtener órdenes (usuario: solo sus órdenes, admin: todas)
+router.get('/', authenticate, orderController.getAllOrders);
+
+// GET /api/orders/:id - Obtener orden por ID
+router.get('/:id', authenticate, orderController.getOrderById);
+
+// POST /api/orders - Crear orden (checkout del carrito)
 router.post('/', authenticate, orderValidator.createOrder, orderController.createOrder);
-router.put('/:id', orderValidator.updateOrder, orderController.updateOrder);
-router.delete('/:id', orderController.deleteOrder);
+
+// PUT /api/orders/:id - Actualizar orden (admin: estado, usuario: dirección)
+router.put('/:id', authenticate, orderValidator.updateOrder, orderController.updateOrder);
+
+// POST /api/orders/:id/cancel - Cancelar orden
+router.post('/:id/cancel', authenticate, orderController.cancelOrder);
 
 module.exports = router;

@@ -26,10 +26,19 @@ const User = sequelize.define('User', {
   },
   password: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true, // Cambiado a true para usuarios de Google OAuth
     validate: {
       len: [6, 255]
     }
+  },
+  googleId: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    unique: true
+  },
+  picture: {
+    type: DataTypes.STRING,
+    allowNull: true
   },
   role: {
     type: DataTypes.ENUM('customer', 'admin'),
@@ -40,6 +49,30 @@ const User = sequelize.define('User', {
     allowNull: true
   },
   address: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  isVerified: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  verificationToken: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  verificationTokenExpires: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  isBlocked: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  blockedAt: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  blockedReason: {
     type: DataTypes.TEXT,
     allowNull: true
   }

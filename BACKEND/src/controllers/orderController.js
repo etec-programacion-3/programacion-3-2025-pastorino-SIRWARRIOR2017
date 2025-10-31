@@ -1,9 +1,38 @@
-const { Order, OrderItem, CartItem, Product, sequelize } = require('../models');
+const { Order, OrderItem, CartItem, Product, User, sequelize } = require('../models');
 
 module.exports = {
   getAllOrders: async (req, res) => {
     try {
-      const orders = await Order.findAll({ include: [OrderItem] });
+      const isAdmin = req.user?.role === 'admin';
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ error: 'Authentication required' });
+      }
+
+      const where = isAdmin ? {} : { userId };
+      const { status, sortBy = 'createdAt', order = 'DESC' } = req.query;
+
+      if (status) where.status = status;
+
+      const orders = await Order.findAll({
+        where,
+        include: [
+          {
+            model: User,
+            attributes: ['id', 'name', 'email', 'phone']
+          },
+          {
+            model: OrderItem,
+            include: [{
+              model: Product,
+              attributes: ['id', 'name', 'price', 'images']
+            }]
+          }
+        ],
+        order: [[sortBy, order]]
+      });
+
       res.json(orders);
     } catch (err) {
       console.error(err);
@@ -13,9 +42,35 @@ module.exports = {
 
   getOrderById: async (req, res) => {
     try {
-      const id = req.params.id;
-      const order = await Order.findByPk(id, { include: [OrderItem] });
-      if (!order) return res.status(404).json({ error: 'Order not found' });
+      const { id } = req.params;
+      const userId = req.user?.id;
+      const isAdmin = req.user?.role === 'admin';
+
+      const order = await Order.findByPk(id, {
+        include: [
+          {
+            model: User,
+            attributes: ['id', 'name', 'email', 'phone', 'address']
+          },
+          {
+            model: OrderItem,
+            include: [{
+              model: Product,
+              attributes: ['id', 'name', 'price', 'brand', 'model', 'images']
+            }]
+          }
+        ]
+      });
+
+      if (!order) {
+        return res.status(404).json({ error: 'Order not found' });
+      }
+
+      // Verificar que el usuario tenga permiso para ver esta orden
+      if (!isAdmin && order.userId !== userId) {
+        return res.status(403).json({ error: 'Unauthorized to view this order' });
+      }
+
       res.json(order);
     } catch (err) {
       console.error(err);
@@ -93,10 +148,95 @@ module.exports = {
   },
 
   updateOrder: async (req, res) => {
-    res.status(501).json({ error: 'Not implemented' });
+    try {
+      const { id } = req.params;
+      const { status, address } = req.body;
+      const isAdmin = req.user?.role === 'admin';
+
+      const order = await Order.findByPk(id);
+      if (!order) {
+        return res.status(404).json({ error: 'Order not found' });
+      }
+
+      // Solo admin puede actualizar el estado
+      if (status && !isAdmin) {
+        return res.status(403).json({ error: 'Only admin can update order status' });
+      }
+
+      // El usuario puede actualizar su dirección si la orden está pendiente
+      if (address && order.userId !== req.user.id) {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+
+      const updates = {};
+      if (status && isAdmin) updates.status = status;
+      if (address && order.status === 'pending') updates.address = address;
+
+      await order.update(updates);
+
+      // Recargar con relaciones
+      const updatedOrder = await Order.findByPk(id, {
+        include: [
+          { model: User, attributes: ['id', 'name', 'email'] },
+          { model: OrderItem, include: [{ model: Product }] }
+        ]
+      });
+
+      res.json(updatedOrder);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Cannot update order', details: err.message });
+    }
   },
 
-  deleteOrder: async (req, res) => {
-    res.status(501).json({ error: 'Not implemented' });
+  cancelOrder: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user?.id;
+      const isAdmin = req.user?.role === 'admin';
+
+      const order = await Order.findByPk(id, {
+        include: [{ model: OrderItem, include: [Product] }]
+      });
+
+      if (!order) {
+        return res.status(404).json({ error: 'Order not found' });
+      }
+
+      // Verificar permisos
+      if (!isAdmin && order.userId !== userId) {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+
+      // Solo se puede cancelar si está pendiente
+      if (order.status !== 'pending') {
+        return res.status(400).json({ error: 'Can only cancel pending orders' });
+      }
+
+      const t = await sequelize.transaction();
+      try {
+        // Devolver stock a los productos
+        for (const item of order.OrderItems) {
+          const product = await Product.findByPk(item.productId, { transaction: t });
+          if (product) {
+            product.stock += item.quantity;
+            await product.save({ transaction: t });
+          }
+        }
+
+        // Actualizar estado de la orden
+        order.status = 'cancelled';
+        await order.save({ transaction: t });
+
+        await t.commit();
+        res.json({ message: 'Order cancelled successfully', order });
+      } catch (err) {
+        await t.rollback();
+        throw err;
+      }
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Cannot cancel order', details: err.message });
+    }
   }
 };
