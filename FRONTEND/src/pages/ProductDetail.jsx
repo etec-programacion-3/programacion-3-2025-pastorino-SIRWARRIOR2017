@@ -37,7 +37,11 @@ const ProductDetail = () => {
           <CardMedia
             component="img"
             sx={{ width: { xs: '100%', md: '50%' }, objectFit: 'cover' }}
-            image={product.image || 'https://via.placeholder.com/400'}
+            image={
+              product.images?.[0]
+                ? `http://localhost:3000${product.images[0]}`
+                : 'https://via.placeholder.com/400'
+            }
             alt={product.name}
           />
           <CardContent sx={{ flex: 1 }}>

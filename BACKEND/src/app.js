@@ -1,9 +1,11 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const { sequelize, testConnection } = require('./config/database');
 const models = require('./models');
+const passport = require('./config/passport');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,6 +22,12 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Inicializar Passport
+app.use(passport.initialize());
+
+// Servir archivos estáticos (imágenes de productos)
+app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
+
 // ============ IMPORTAR RUTAS ============
 const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/products');
@@ -29,6 +37,7 @@ const orderRoutes = require('./routes/orders');
 const orderItemRoutes = require('./routes/orderItems');
 const serviceRequestRoutes = require('./routes/serviceRequests');
 const cartRoutes = require('./routes/cart');
+const timeSlotRoutes = require('./routes/timeSlots');
 
 // ============ RUTAS BÁSICAS ============
 app.get('/', (req, res) => {
@@ -71,6 +80,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/order-items', orderItemRoutes);
 app.use('/api/service-requests', serviceRequestRoutes);
 app.use('/api/cart', cartRoutes);
+app.use('/api/time-slots', timeSlotRoutes);
 
 // 404 Handler
 app.use('*', (req, res) => {

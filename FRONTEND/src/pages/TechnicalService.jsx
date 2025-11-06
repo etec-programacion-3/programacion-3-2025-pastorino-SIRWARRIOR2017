@@ -1,269 +1,182 @@
-import { useState } from 'react';
-import {
-  Container,
-  Typography,
-  Box,
-  Grid,
-  Card,
-  CardContent,
-  TextField,
-  Button,
-  Paper,
-  Stepper,
-  Step,
-  StepLabel,
-  Alert,
-} from '@mui/material';
-import {
-  Computer as ComputerIcon,
-  Build as BuildIcon,
-  Timer as TimerIcon,
-  Assignment as AssignmentIcon,
-} from '@mui/icons-material';
-
-const services = [
-  {
-    title: 'Diagnóstico',
-    description: 'Evaluación completa del estado de tu equipo',
-    icon: ComputerIcon,
-    price: '30',
-  },
-  {
-    title: 'Reparación',
-    description: 'Solución de problemas de hardware y software',
-    icon: BuildIcon,
-    price: '50+',
-  },
-  {
-    title: 'Mantenimiento',
-    description: 'Limpieza y optimización de tu equipo',
-    icon: TimerIcon,
-    price: '40',
-  },
-  {
-    title: 'Consultoría',
-    description: 'Asesoramiento técnico personalizado',
-    icon: AssignmentIcon,
-    price: '25',
-  },
-];
-
-const steps = ['Información Personal', 'Detalles del Servicio', 'Confirmación'];
+import { Container, Box, Typography, Card, CardContent, Grid, Paper, Divider } from '@mui/material';
+import { Phone, Mail, Clock, MapPin, Wrench, CheckCircle } from 'lucide-react';
 
 const TechnicalService = () => {
-  const [activeStep, setActiveStep] = useState(0);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    serviceType: '',
-    description: '',
-  });
-
-  const handleNext = () => {
-    setActiveStep((prevStep) => prevStep + 1);
-  };
-
-  const handleBack = () => {
-    setActiveStep((prevStep) => prevStep - 1);
-  };
-
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    // Aquí iría la lógica para enviar el formulario
-    handleNext();
-  };
-
-  const renderStepContent = (step) => {
-    switch (step) {
-      case 0:
-        return (
-          <Box component="form" noValidate sx={{ mt: 3 }}>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Nombre completo"
-                  name="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Teléfono"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                />
-              </Grid>
-            </Grid>
-          </Box>
-        );
-      case 1:
-        return (
-          <Box component="form" noValidate sx={{ mt: 3 }}>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <TextField
-                  select
-                  required
-                  fullWidth
-                  label="Tipo de servicio"
-                  value={formData.serviceType}
-                  onChange={(e) => setFormData({ ...formData, serviceType: e.target.value })}
-                  SelectProps={{
-                    native: true,
-                  }}
-                >
-                  <option value="">Selecciona un servicio</option>
-                  {services.map((service) => (
-                    <option key={service.title} value={service.title}>
-                      {service.title}
-                    </option>
-                  ))}
-                </TextField>
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  required
-                  fullWidth
-                  multiline
-                  rows={4}
-                  label="Descripción del problema"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                />
-              </Grid>
-            </Grid>
-          </Box>
-        );
-      case 2:
-        return (
-          <Box sx={{ mt: 3 }}>
-            <Alert severity="success">
-              ¡Gracias por confiar en nosotros! Te contactaremos pronto para coordinar el servicio.
-            </Alert>
-            <Box sx={{ mt: 2 }}>
-              <Typography variant="subtitle1" gutterBottom>
-                <strong>Nombre:</strong> {formData.name}
-              </Typography>
-              <Typography variant="subtitle1" gutterBottom>
-                <strong>Email:</strong> {formData.email}
-              </Typography>
-              <Typography variant="subtitle1" gutterBottom>
-                <strong>Teléfono:</strong> {formData.phone}
-              </Typography>
-              <Typography variant="subtitle1" gutterBottom>
-                <strong>Servicio:</strong> {formData.serviceType}
-              </Typography>
-              <Typography variant="subtitle1" gutterBottom>
-                <strong>Descripción:</strong> {formData.description}
-              </Typography>
-            </Box>
-          </Box>
-        );
-      default:
-        return null;
-    }
-  };
-
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography
-        variant="h3"
-        component="h1"
-        gutterBottom
-        sx={{
-          textAlign: 'center',
-          fontWeight: 'bold',
-          mb: 6,
-        }}
-      >
-        Servicio Técnico
-      </Typography>
+    <Container maxWidth="lg" sx={{ py: 6 }}>
+      {/* Encabezado */}
+      <Box sx={{ textAlign: 'center', mb: 6 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+          <Wrench size={64} color="#667eea" />
+        </Box>
+        <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 2 }}>
+          Servicio Técnico Profesional
+        </Typography>
+        <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 600, mx: 'auto' }}>
+          Ofrecemos mantenimiento, reparación e instalación de componentes PC
+        </Typography>
+      </Box>
 
-      <Grid container spacing={4}>
-        {/* Servicios ofrecidos */}
-        {services.map((service) => (
-          <Grid item xs={12} sm={6} md={3} key={service.title}>
-            <Card
-              sx={{
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                transition: 'transform 0.2s',
-                '&:hover': {
-                  transform: 'scale(1.05)',
-                },
-              }}
-            >
-              <CardContent sx={{ flexGrow: 1, textAlign: 'center' }}>
-                <Box sx={{ mb: 2 }}>
-                  {<service.icon sx={{ fontSize: 40, color: 'primary.main' }} />}
+      {/* Información de Contacto Principal */}
+      <Paper elevation={3} sx={{ p: 4, mb: 4, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
+        <Grid container spacing={3} alignItems="center">
+          <Grid item xs={12} md={6}>
+            <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 2 }}>
+              ¿Necesitas asistencia técnica?
+            </Typography>
+            <Typography variant="body1" sx={{ mb: 3 }}>
+              Comunícate con nosotros para agendar una cita o consultar sobre nuestros servicios
+            </Typography>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Phone size={32} />
+              <Box>
+                <Typography variant="caption" sx={{ opacity: 0.9 }}>
+                  Llámanos
+                </Typography>
+                <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
+                  +54 11 1234-5678
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Mail size={32} />
+              <Box>
+                <Typography variant="caption" sx={{ opacity: 0.9 }}>
+                  Escríbenos
+                </Typography>
+                <Typography variant="h6">
+                  soporte@pcstore.com
+                </Typography>
+              </Box>
+            </Box>
+          </Grid>
+        </Grid>
+      </Paper>
+
+      {/* Horarios y Ubicación */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} md={6}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                <Clock size={32} color="#667eea" />
+                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                  Horarios de Atención
+                </Typography>
+              </Box>
+              <Divider sx={{ mb: 2 }} />
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+                    Lunes a Viernes
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary">
+                    9:00 AM - 6:00 PM
+                  </Typography>
                 </Box>
-                <Typography variant="h6" component="h2" gutterBottom>
-                  {service.title}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+                    Sábados
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary">
+                    10:00 AM - 2:00 PM
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+                    Domingos
+                  </Typography>
+                  <Typography variant="body1" color="text.secondary">
+                    Cerrado
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                <MapPin size={32} color="#667eea" />
+                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                  Ubicación
                 </Typography>
-                <Typography variant="body2" color="text.secondary" paragraph>
-                  {service.description}
-                </Typography>
-                <Typography variant="h6" color="primary.main">
-                  Desde ${service.price}
-                </Typography>
+              </Box>
+              <Divider sx={{ mb: 2 }} />
+              <Typography variant="body1" sx={{ mb: 1 }}>
+                Av. Corrientes 1234
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 1 }}>
+                Ciudad Autónoma de Buenos Aires
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                Argentina, C1043
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Servicios Ofrecidos */}
+      <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 3, textAlign: 'center' }}>
+        Nuestros Servicios
+      </Typography>
+      <Grid container spacing={3}>
+        {[
+          { title: 'Mantenimiento Preventivo', description: 'Limpieza, actualización de drivers y optimización del sistema' },
+          { title: 'Reparación de Hardware', description: 'Diagnóstico y reparación de componentes dañados' },
+          { title: 'Instalación de Componentes', description: 'Instalación y configuración de nuevos componentes' },
+          { title: 'Consultoría Técnica', description: 'Asesoramiento para mejoras y upgrades de tu equipo' },
+          { title: 'Upgrade de PC', description: 'Actualización de componentes para mejorar el rendimiento' },
+          { title: 'Formateo y Reinstalación', description: 'Instalación limpia del sistema operativo' }
+        ].map((service, index) => (
+          <Grid item xs={12} sm={6} md={4} key={index}>
+            <Card sx={{ height: '100%', transition: 'transform 0.2s', '&:hover': { transform: 'translateY(-4px)' } }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                  <CheckCircle size={24} color="#667eea" style={{ marginTop: 4, flexShrink: 0 }} />
+                  <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1 }}>
+                      {service.title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {service.description}
+                    </Typography>
+                  </Box>
+                </Box>
               </CardContent>
             </Card>
           </Grid>
         ))}
       </Grid>
 
-      {/* Formulario de solicitud */}
-      <Paper sx={{ mt: 6, p: 4 }}>
-        <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 4 }}>
-          Solicitar Servicio
+      {/* Llamado a la Acción */}
+      <Box sx={{ textAlign: 'center', mt: 6, p: 4, bgcolor: '#f5f5f5', borderRadius: 2 }}>
+        <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 2 }}>
+          ¿Listo para agendar tu servicio?
         </Typography>
-
-        <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
-          {steps.map((label) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
-
-        {renderStepContent(activeStep)}
-
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
-          {activeStep !== 0 && activeStep !== steps.length - 1 && (
-            <Button onClick={handleBack} sx={{ mr: 1 }}>
-              Atrás
-            </Button>
-          )}
-          {activeStep === steps.length - 1 ? (
-            <Button variant="contained" color="primary" onClick={() => setActiveStep(0)}>
-              Nuevo Servicio
-            </Button>
-          ) : (
-            <Button variant="contained" onClick={activeStep === 1 ? handleSubmit : handleNext}>
-              {activeStep === 1 ? 'Enviar' : 'Siguiente'}
-            </Button>
-          )}
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+          Comunícate con nosotros por teléfono o email para coordinar tu visita
+        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3, flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Phone size={20} color="#667eea" />
+            <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#667eea' }}>
+              +54 11 1234-5678
+            </Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Mail size={20} color="#667eea" />
+            <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#667eea' }}>
+              soporte@pcstore.com
+            </Typography>
+          </Box>
         </Box>
-      </Paper>
+      </Box>
     </Container>
   );
 };

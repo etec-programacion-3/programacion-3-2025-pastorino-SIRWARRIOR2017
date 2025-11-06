@@ -10,7 +10,20 @@ const authenticate = async (req, res, next) => {
     const token = authHeader.split(' ')[1];
     const payload = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findByPk(payload.id);
-    if (!user) return res.status(401).json({ error: 'Invalid token: user not found' });
+
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid token: user not found' });
+    }
+
+    // Verificar si el usuario está bloqueado
+    if (user.isBlocked) {
+      return res.status(403).json({
+        error: 'Account blocked',
+        message: 'Tu cuenta ha sido bloqueada. Contacta al administrador.',
+        reason: user.blockedReason
+      });
+    }
+
     req.user = user; // attach full user instance
     next();
   } catch (err) {
@@ -29,5 +42,7 @@ const isAdmin = (req, res, next) => {
 
 module.exports = {
   authenticate,
-  isAdmin
+  authenticateToken: authenticate, // Alias
+  isAdmin,
+  requireAdmin: isAdmin // Alias
 };

@@ -1,30 +1,27 @@
-import { 
-  AppBar, 
-  Toolbar, 
-  Typography, 
-  Button, 
+import { useState, useContext, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
   Badge,
   IconButton,
-  Avatar,
   Menu,
   MenuItem,
-  ListItemIcon,
+  Box,
+  Container,
+  Avatar,
   Divider,
-  Box
+  ListItemIcon
 } from '@mui/material';
-import { Link, useNavigate } from 'react-router-dom';
-import { useState, useContext } from 'react';
 import {
-  AccountCircle,
-  Settings,
-  ShoppingBag,
-  Logout,
-  Person,
-  History,
-  Support,
-  Favorite,
-  Business
-} from '@mui/icons-material';
+  ShoppingCart,
+  User,
+  LogOut,
+  Package,
+  Shield
+} from 'lucide-react';
 import CartContext from '../contexts/CartContext';
 import AuthContext from '../contexts/AuthContext';
 
@@ -33,6 +30,16 @@ const Header = () => {
   const { isAuthenticated, logout, user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleMenu = (event) => {
     setAnchorEl(event.currentTarget);
@@ -54,7 +61,7 @@ const Header = () => {
   };
 
   const getInitials = (name) => {
-    if (!name) return '?';
+    if (!name) return 'U';
     return name
       .split(' ')
       .map(word => word[0])
@@ -64,166 +71,254 @@ const Header = () => {
   };
 
   return (
-    <AppBar position="fixed">
-      <Toolbar>
-        {/* Logo y nombre */}
-        <Typography 
-          variant="h6" 
-          component={Link} 
-          to="/" 
-          sx={{ 
-            flexGrow: 1, 
-            textDecoration: 'none', 
-            color: 'white',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1
-          }}
-        >
-          <Business sx={{ fontSize: 28 }} />
-          PC Store
-        </Typography>
+    <AppBar
+      position="sticky"
+      elevation={scrolled ? 4 : 0}
+      sx={{
+        background: scrolled
+          ? 'rgba(255, 255, 255, 0.95)'
+          : 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
+        backdropFilter: scrolled ? 'blur(10px)' : 'none',
+        transition: 'all 0.3s ease-in-out',
+        borderBottom: scrolled ? '1px solid rgba(0,0,0,0.08)' : 'none',
+      }}
+    >
+      <Container maxWidth="xl">
+        <Toolbar disableGutters sx={{ minHeight: { xs: 64, md: 70 } }}>
+          {/* Logo */}
+          <Box
+            component={Link}
+            to="/"
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+              textDecoration: 'none',
+              flexGrow: { xs: 1, md: 0 },
+              mr: { md: 6 },
+            }}
+          >
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: 2,
+                background: scrolled
+                  ? 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)'
+                  : 'rgba(255,255,255,0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 800,
+                fontSize: '1.2rem',
+                color: scrolled ? 'white' : 'white',
+                transition: 'all 0.3s ease',
+              }}
+            >
+              PC
+            </Box>
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 800,
+                fontSize: '1.4rem',
+                color: scrolled ? 'primary.main' : 'white',
+                letterSpacing: '-0.02em',
+                transition: 'color 0.3s ease',
+              }}
+            >
+              PC Store
+            </Typography>
+          </Box>
 
-        {/* Botones de navegación */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Button color="inherit" component={Link} to="/">
-            Home
-          </Button>
-          <Button color="inherit" component={Link} to="/products">
-            Productos
-          </Button>
-          <Button color="inherit" component={Link} to="/technical-service">
-            Servicios
-          </Button>
+          {/* Navigation */}
+          <Box
+            sx={{
+              display: { xs: 'none', md: 'flex' },
+              gap: 1,
+              flexGrow: 1,
+            }}
+          >
+            <Button
+              component={Link}
+              to="/"
+              sx={{
+                color: scrolled ? 'text.primary' : 'white',
+                fontWeight: 600,
+                px: 2,
+                '&:hover': {
+                  backgroundColor: scrolled ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.1)',
+                },
+              }}
+            >
+              Inicio
+            </Button>
+            <Button
+              component={Link}
+              to="/products"
+              sx={{
+                color: scrolled ? 'text.primary' : 'white',
+                fontWeight: 600,
+                px: 2,
+                '&:hover': {
+                  backgroundColor: scrolled ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.1)',
+                },
+              }}
+            >
+              Productos
+            </Button>
+            <Button
+              component={Link}
+              to="/technical-service"
+              sx={{
+                color: scrolled ? 'text.primary' : 'white',
+                fontWeight: 600,
+                px: 2,
+                '&:hover': {
+                  backgroundColor: scrolled ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.1)',
+                },
+              }}
+            >
+              Servicios
+            </Button>
+          </Box>
 
-          {/* Carrito */}
-          <Button color="inherit" component={Link} to="/cart">
-            <Badge badgeContent={getTotalItems()} color="error">
-              <ShoppingBag />
-            </Badge>
-          </Button>
+          {/* Right Side Actions */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {/* Cart */}
+            <IconButton
+              component={Link}
+              to="/cart"
+              sx={{
+                color: scrolled ? 'primary.main' : 'white',
+                '&:hover': {
+                  backgroundColor: scrolled ? 'rgba(37, 99, 235, 0.08)' : 'rgba(255,255,255,0.1)',
+                },
+              }}
+            >
+              <Badge badgeContent={getTotalItems()} color="error">
+                <ShoppingCart size={22} />
+              </Badge>
+            </IconButton>
 
-          {/* Menú de usuario */}
-          {isAuthenticated ? (
-            <>
-              <IconButton
-                size="large"
-                onClick={handleMenu}
-                color="inherit"
-                aria-label="menu de usuario"
-                aria-controls="menu-appbar"
-                aria-haspopup="true"
-              >
-                <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.main' }}>
-                  {getInitials(user?.name)}
-                </Avatar>
-              </IconButton>
-              <Menu
-                id="menu-appbar"
-                anchorEl={anchorEl}
-                anchorOrigin={{
-                  vertical: 'bottom',
-                  horizontal: 'right',
-                }}
-                keepMounted
-                transformOrigin={{
-                  vertical: 'top',
-                  horizontal: 'right',
-                }}
-                open={Boolean(anchorEl)}
-                onClose={handleClose}
-                PaperProps={{
-                  sx: {
-                    mt: 1.5,
-                    '& .MuiMenuItem-root': {
-                      px: 2,
-                      py: 1,
-                      borderRadius: 0.5,
-                      '&:hover': {
-                        bgcolor: 'action.hover',
-                      },
+            {/* User Menu */}
+            {isAuthenticated ? (
+              <>
+                <IconButton
+                  onClick={handleMenu}
+                  sx={{
+                    ml: 1,
+                    p: 0.5,
+                  }}
+                >
+                  <Avatar
+                    sx={{
+                      width: 36,
+                      height: 36,
+                      bgcolor: scrolled ? 'primary.main' : 'rgba(255,255,255,0.2)',
+                      color: 'white',
+                      fontWeight: 600,
+                      fontSize: '0.9rem',
+                      border: scrolled ? 'none' : '2px solid rgba(255,255,255,0.3)',
+                    }}
+                  >
+                    {getInitials(user?.name)}
+                  </Avatar>
+                </IconButton>
+                <Menu
+                  anchorEl={anchorEl}
+                  open={Boolean(anchorEl)}
+                  onClose={handleClose}
+                  PaperProps={{
+                    sx: {
+                      mt: 1.5,
+                      minWidth: 200,
+                      borderRadius: 2,
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
                     },
-                  },
-                }}
-              >
-                <Box sx={{ px: 2, py: 1.5 }}>
-                  <Typography variant="subtitle1" noWrap>
-                    {user?.name || 'Usuario'}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" noWrap>
-                    {user?.email || 'email@example.com'}
-                  </Typography>
-                </Box>
-                <Divider />
-                <MenuItem onClick={() => handleNavigate('/profile')}>
-                  <ListItemIcon>
-                    <Person fontSize="small" />
-                  </ListItemIcon>
-                  Mi Perfil
-                </MenuItem>
-                <MenuItem onClick={() => handleNavigate('/orders')}>
-                  <ListItemIcon>
-                    <ShoppingBag fontSize="small" />
-                  </ListItemIcon>
-                  Mis Pedidos
-                </MenuItem>
-                <MenuItem onClick={() => handleNavigate('/favorites')}>
-                  <ListItemIcon>
-                    <Favorite fontSize="small" />
-                  </ListItemIcon>
-                  Favoritos
-                </MenuItem>
-                <MenuItem onClick={() => handleNavigate('/service-history')}>
-                  <ListItemIcon>
-                    <History fontSize="small" />
-                  </ListItemIcon>
-                  Historial de Servicios
-                </MenuItem>
-                <MenuItem onClick={() => handleNavigate('/support')}>
-                  <ListItemIcon>
-                    <Support fontSize="small" />
-                  </ListItemIcon>
-                  Soporte Técnico
-                </MenuItem>
-                <MenuItem onClick={() => handleNavigate('/settings')}>
-                  <ListItemIcon>
-                    <Settings fontSize="small" />
-                  </ListItemIcon>
-                  Configuración
-                </MenuItem>
-                <Divider />
-                <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
-                  <ListItemIcon>
-                    <Logout fontSize="small" color="error" />
-                  </ListItemIcon>
-                  Cerrar Sesión
-                </MenuItem>
-              </Menu>
-            </>
-          ) : (
-            <>
-              <Button color="inherit" component={Link} to="/login">
-                Login
-              </Button>
-              <Button 
-                variant="outlined" 
-                color="inherit" 
-                component={Link} 
-                to="/register"
-                sx={{ 
-                  borderColor: 'white',
-                  '&:hover': {
-                    borderColor: 'white',
-                    bgcolor: 'rgba(255,255,255,0.1)',
-                  }
-                }}
-              >
-                Register
-              </Button>
-            </>
-          )}
-        </Box>
-      </Toolbar>
+                  }}
+                >
+                  <Box sx={{ px: 2, py: 1.5 }}>
+                    <Typography variant="subtitle2" fontWeight={600}>
+                      {user?.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {user?.email}
+                    </Typography>
+                  </Box>
+                  <Divider />
+                  <MenuItem onClick={() => handleNavigate('/profile')}>
+                    <ListItemIcon>
+                      <User size={18} />
+                    </ListItemIcon>
+                    Mi Perfil
+                  </MenuItem>
+                  <MenuItem onClick={() => handleNavigate('/orders')}>
+                    <ListItemIcon>
+                      <Package size={18} />
+                    </ListItemIcon>
+                    Mis Órdenes
+                  </MenuItem>
+                  {user?.role === 'admin' && (
+                    <>
+                      <Divider />
+                      <MenuItem onClick={() => handleNavigate('/admin')}>
+                        <ListItemIcon>
+                          <Shield size={18} />
+                        </ListItemIcon>
+                        Panel Admin
+                      </MenuItem>
+                    </>
+                  )}
+                  <Divider />
+                  <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
+                    <ListItemIcon>
+                      <LogOut size={18} color="#ef4444" />
+                    </ListItemIcon>
+                    Cerrar Sesión
+                  </MenuItem>
+                </Menu>
+              </>
+            ) : (
+              <Box sx={{ display: 'flex', gap: 1, ml: 1 }}>
+                <Button
+                  variant="outlined"
+                  component={Link}
+                  to="/register"
+                  sx={{
+                    borderColor: scrolled ? 'primary.main' : 'white',
+                    borderWidth: 2,
+                    color: scrolled ? 'primary.main' : 'white',
+                    fontWeight: 600,
+                    '&:hover': {
+                      borderWidth: 2,
+                      borderColor: scrolled ? 'primary.dark' : 'white',
+                      backgroundColor: scrolled ? 'rgba(37, 99, 235, 0.08)' : 'rgba(255,255,255,0.1)',
+                    },
+                  }}
+                >
+                  Registrarse
+                </Button>
+                <Button
+                  variant="contained"
+                  component={Link}
+                  to="/login"
+                  sx={{
+                    bgcolor: scrolled ? 'primary.main' : 'white',
+                    color: scrolled ? 'white' : 'primary.main',
+                    fontWeight: 600,
+                    '&:hover': {
+                      bgcolor: scrolled ? 'primary.dark' : 'rgba(255,255,255,0.9)',
+                    },
+                  }}
+                >
+                  Ingresar
+                </Button>
+              </Box>
+            )}
+          </Box>
+        </Toolbar>
+      </Container>
     </AppBar>
   );
 };

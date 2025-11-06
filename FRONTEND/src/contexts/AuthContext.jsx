@@ -1,6 +1,7 @@
 import React, { createContext, useReducer, useEffect, useCallback } from 'react';
 import * as api from '../services/api';
 import { jwtDecode } from "jwt-decode";
+import toast from 'react-hot-toast';
 
 const AuthContext = createContext();
 
@@ -68,7 +69,14 @@ function reducer(state, action) {
         error: action.payload
       };
     case 'LOGOUT':
-      return initialState;
+      return {
+        user: null,
+        token: null,
+        isAuthenticated: false,
+        loading: false,
+        error: null,
+        lastActivity: null
+      };
     case 'UPDATE_USER':
       return { ...state, user: { ...state.user, ...action.payload } };
     case 'UPDATE_LAST_ACTIVITY':
@@ -117,16 +125,47 @@ export const AuthProvider = ({ children }) => {
 
     window.addEventListener('mousemove', updateActivity);
     window.addEventListener('keydown', updateActivity);
-    
+
     return () => {
       window.removeEventListener('mousemove', updateActivity);
       window.removeEventListener('keydown', updateActivity);
     };
   }, [state.isAuthenticated]);
 
+  // Escuchar evento de usuario bloqueado
+  useEffect(() => {
+    const handleUserBlocked = (event) => {
+      const { message, reason } = event.detail;
+
+      // Desloguear al usuario
+      dispatch({ type: 'LOGOUT' });
+
+      // Mostrar mensaje de error
+      toast.error(
+        reason
+          ? `${message}\nRazón: ${reason}`
+          : message || 'Tu cuenta ha sido bloqueada. Contacta al administrador.',
+        { duration: 6000 }
+      );
+    };
+
+    window.addEventListener('user-blocked', handleUserBlocked);
+
+    return () => {
+      window.removeEventListener('user-blocked', handleUserBlocked);
+    };
+  }, []);
+
   const login = async (credentials) => {
     try {
       dispatch({ type: 'AUTH_START' });
+
+      // Si viene de OAuth, ya tenemos el token y usuario
+      if (credentials.skipApi) {
+        dispatch({ type: 'AUTH_SUCCESS', payload: { user: credentials.user, token: credentials.token } });
+        return { user: credentials.user, token: credentials.token };
+      }
+
       const data = await api.login(credentials);
       dispatch({ type: 'AUTH_SUCCESS', payload: data });
       return data;
@@ -171,7 +210,8 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
-    updateUser
+    updateUser,
+    isAdmin
   };
 
   return (

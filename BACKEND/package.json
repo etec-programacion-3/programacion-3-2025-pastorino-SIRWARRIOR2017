@@ -8,7 +8,9 @@
     "dev": "nodemon src/app.js",
     "migrate": "npx sequelize-cli db:migrate",
     "seed": "node src/seeders/seedData.js",
-    "seed:all": "npx sequelize-cli db:seed:all"
+    "seed:all": "npx sequelize-cli db:seed:all",
+    "create-admin": "node src/scripts/createAdmin.js",
+    "seed-categories": "node src/scripts/seedCategories.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
@@ -18,6 +20,10 @@
     "express": "^4.18.2",
     "express-validator": "^7.0.1",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
+    "nodemailer": "^7.0.10",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
     "sequelize": "^6.35.2",
     "sqlite3": "^5.1.6"
   },
