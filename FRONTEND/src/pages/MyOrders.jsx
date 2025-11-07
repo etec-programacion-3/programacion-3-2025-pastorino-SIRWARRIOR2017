@@ -23,7 +23,7 @@ import {
 } from '@mui/material';
 import { ChevronDown, ChevronUp, Package, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
-import * as api from '../../services/api';
+import * as api from '../services/api';
 
 const statusColors = {
   pending: 'warning',

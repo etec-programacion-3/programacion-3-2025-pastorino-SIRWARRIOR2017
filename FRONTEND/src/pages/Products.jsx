@@ -264,15 +264,11 @@ const Products = () => {
                     display: 'flex',
                     flexDirection: 'column',
                     position: 'relative',
-                    transition: 'all 0.3s ease-in-out',
+                    transition: 'box-shadow 0.3s ease-in-out',
                     '&:hover': {
-                      transform: 'translateY(-8px)',
-                      boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)',
+                      boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 10px 10px -5px rgb(0 0 0 / 0.04)',
                       '& .product-image': {
                         transform: 'scale(1.05)',
-                      },
-                      '& .view-details-btn': {
-                        opacity: 1,
                       },
                     },
                   }}
@@ -340,7 +336,7 @@ const Products = () => {
                       component="img"
                       image={
                         product.images?.[0]
-                          ? `http://localhost:3000${product.images[0]}`
+                          ? `import.meta.env.VITE_API_BASE_URL + product.images[0]}`
                           : 'https://via.placeholder.com/300x240?text=PC+Component'
                       }
                       alt={product.name}
@@ -353,21 +349,25 @@ const Products = () => {
                         opacity: product.stock === 0 ? 0.4 : 1,
                       }}
                     />
+                  </Box>
 
-                    {/* Botón Ver Detalles al hover */}
+                  {/* Botón Ver Detalles debajo de la imagen */}
+                  <Box sx={{ px: 2.5, pt: 2 }}>
                     <Button
                       className="view-details-btn"
-                      variant="contained"
+                      fullWidth
+                      variant="outlined"
                       startIcon={<Eye size={16} />}
                       onClick={() => handleProductClick(product.id)}
                       sx={{
-                        position: 'absolute',
-                        bottom: 12,
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        opacity: 0,
-                        transition: 'opacity 0.3s ease-in-out',
-                        whiteSpace: 'nowrap',
+                        borderColor: 'divider',
+                        color: 'text.secondary',
+                        fontWeight: 600,
+                        '&:hover': {
+                          borderColor: 'primary.main',
+                          color: 'primary.main',
+                          backgroundColor: 'primary.light',
+                        },
                       }}
                     >
                       Ver Detalles

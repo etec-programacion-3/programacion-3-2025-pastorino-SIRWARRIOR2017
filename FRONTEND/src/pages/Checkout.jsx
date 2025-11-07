@@ -25,8 +25,9 @@ import toast from 'react-hot-toast';
 import CartContext from '../contexts/CartContext';
 import AuthContext from '../contexts/AuthContext';
 import axios from 'axios';
+import API_CONFIG from '../config/api';
 
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = API_CONFIG.API_URL;
 
 const steps = ['Revisar Orden', 'Información de Envío', 'Método de Pago', 'Confirmar'];
 
@@ -192,6 +193,7 @@ const Checkout = () => {
       setLoading(true);
       const token = localStorage.getItem('token');
 
+      // Crear la orden desde el carrito del backend (ya sincronizado)
       const response = await axios.post(
         `${API_BASE_URL}/orders`,
         { address: formData.address },
@@ -263,7 +265,7 @@ const Checkout = () => {
                     <Avatar
                       src={
                         item.images?.[0]
-                          ? `http://localhost:3000${item.images[0]}`
+                          ? API_CONFIG.BASE_URL + item.images[0]
                           : 'https://via.placeholder.com/60?text=Sin+Imagen'
                       }
                       variant="rounded"

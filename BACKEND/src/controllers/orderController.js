@@ -10,8 +10,10 @@ module.exports = {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
-      const where = isAdmin ? {} : { userId };
-      const { status, sortBy = 'createdAt', order = 'DESC' } = req.query;
+      // Si includeAll=true y es admin, devuelve todas las órdenes
+      // Si no, devuelve solo las órdenes del usuario actual
+      const { includeAll, status, sortBy = 'createdAt', order = 'DESC' } = req.query;
+      const where = (isAdmin && includeAll === 'true') ? {} : { userId };
 
       if (status) where.status = status;
 

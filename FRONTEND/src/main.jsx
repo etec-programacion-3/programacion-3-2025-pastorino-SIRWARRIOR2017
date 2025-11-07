@@ -4,17 +4,20 @@ import App from './App';
 import { CssBaseline, ThemeProvider } from '@mui/material';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
+import { SiteConfigProvider } from './contexts/SiteConfigContext';
 import theme from './theme';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AuthProvider>
-        <CartProvider>
-          <App />
-        </CartProvider>
-      </AuthProvider>
+      <SiteConfigProvider>
+        <AuthProvider>
+          <CartProvider>
+            <App />
+          </CartProvider>
+        </AuthProvider>
+      </SiteConfigProvider>
     </ThemeProvider>
   </React.StrictMode>,
 );

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Container,
   Box,
@@ -8,231 +8,437 @@ import {
   TextField,
   Button,
   Divider,
-  Switch,
-  FormControlLabel,
   Alert,
   Card,
   CardContent,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction
+  Avatar,
+  InputAdornment
 } from '@mui/material';
-import { Save, Database, Mail, Shield, Bell } from 'lucide-react';
+import { Save, Upload, Image as ImageIcon, Palette, Mail, Phone, MapPin, Facebook, Instagram, Twitter } from 'lucide-react';
 import toast from 'react-hot-toast';
+import * as api from '../../services/api';
 
 const Settings = () => {
   const [settings, setSettings] = useState({
-    storeName: 'PC Store',
-    storeEmail: 'contacto@pcstore.com',
-    storePhone: '555-1234',
-    storeAddress: 'Av. Principal 123',
-    taxRate: 16,
-    freeShippingThreshold: 1000,
-    emailNotifications: true,
-    orderNotifications: true,
-    lowStockAlerts: true,
-    maintenanceMode: false
+    siteName: '',
+    siteSlogan: '',
+    logo: '',
+    primaryColor: '#667eea',
+    secondaryColor: '#764ba2',
+    email: '',
+    phone: '',
+    address: '',
+    facebook: '',
+    instagram: '',
+    twitter: '',
+    currency: '$',
+    taxRate: 16.00,
+    shippingCost: 50.00,
+    freeShippingThreshold: 1000.00
   });
 
+  const [logoFile, setLogoFile] = useState(null);
+  const [logoPreview, setLogoPreview] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const data = await api.getSiteSettings();
+      setSettings(data);
+      if (data.logo) {
+        setLogoPreview(`import.meta.env.VITE_API_BASE_URL + data.logo}`);
+      }
+    } catch (err) {
+      console.error('Error loading settings:', err);
+      toast.error('Error al cargar la configuración');
+    }
+  };
 
   const handleChange = (field, value) => {
     setSettings(prev => ({ ...prev, [field]: value }));
     setSaved(false);
   };
 
-  const handleSave = () => {
-    // Aquí guardarías en la base de datos o localStorage
-    localStorage.setItem('storeSettings', JSON.stringify(settings));
-    toast.success('Configuración guardada exitosamente');
-    setSaved(true);
+  const handleLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setLogoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
-  const handleResetDatabase = () => {
-    if (window.confirm('⚠️ ¿Estás seguro de resetear la base de datos? Esta acción no se puede deshacer.')) {
-      toast.error('Función no implementada en modo demo');
+  const handleSave = async () => {
+    try {
+      setLoading(true);
+
+      let updatedSettings = { ...settings };
+
+      // Subir logo si hay uno nuevo
+      if (logoFile) {
+        const logoResult = await api.uploadLogo(logoFile);
+        updatedSettings.logo = logoResult.logoUrl;
+      }
+
+      // Guardar configuración general
+      await api.updateSiteSettings(updatedSettings);
+
+      toast.success('Configuración guardada exitosamente');
+      setSaved(true);
+      setLogoFile(null);
+
+      // Recargar para ver cambios
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (err) {
+      console.error('Error saving settings:', err);
+      toast.error(err.message || 'Error al guardar la configuración');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" sx={{ mb: 4 }}>
-        Configuración del Sistema
+      <Typography variant="h4" sx={{ mb: 1, fontWeight: 'bold' }}>
+        Configuración del Sitio
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
+        Personaliza la apariencia y configuración de tu tienda
       </Typography>
 
       {saved && (
         <Alert severity="success" sx={{ mb: 3 }}>
-          Configuración guardada exitosamente
+          Configuración guardada exitosamente. La página se recargará para aplicar los cambios.
         </Alert>
       )}
 
       <Grid container spacing={3}>
-        {/* Información de la Tienda */}
+        {/* Branding */}
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3, height: '100%' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+              <Palette size={24} color="#667eea" />
+              <Typography variant="h6" fontWeight="bold">Branding</Typography>
+            </Box>
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+              <TextField
+                fullWidth
+                label="Nombre del Sitio"
+                value={settings.siteName}
+                onChange={(e) => handleChange('siteName', e.target.value)}
+                helperText="Este nombre aparecerá en el header y footer"
+              />
+
+              <TextField
+                fullWidth
+                label="Slogan"
+                value={settings.siteSlogan}
+                onChange={(e) => handleChange('siteSlogan', e.target.value)}
+                helperText="Frase descriptiva de tu tienda"
+              />
+
+              <Divider />
+
+              {/* Logo Upload */}
+              <Box>
+                <Typography variant="subtitle2" gutterBottom fontWeight="600">
+                  Logo del Sitio
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
+                  {logoPreview && (
+                    <Avatar
+                      src={logoPreview}
+                      alt="Logo"
+                      variant="rounded"
+                      sx={{ width: 80, height: 80 }}
+                    />
+                  )}
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    startIcon={<Upload size={18} />}
+                  >
+                    {logoFile ? 'Cambiar Logo' : 'Subir Logo'}
+                    <input
+                      type="file"
+                      hidden
+                      accept="image/*"
+                      onChange={handleLogoChange}
+                    />
+                  </Button>
+                </Box>
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                  Tamaño recomendado: 200x60px
+                </Typography>
+              </Box>
+
+            </Box>
+          </Paper>
+        </Grid>
+
+        {/* Colores del Tema */}
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3, height: '100%' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+              <Palette size={24} color="#764ba2" />
+              <Typography variant="h6" fontWeight="bold">Colores del Tema</Typography>
+            </Box>
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <Box>
+                <Typography variant="subtitle2" gutterBottom fontWeight="600">
+                  Color Primario
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                  <input
+                    type="color"
+                    value={settings.primaryColor}
+                    onChange={(e) => handleChange('primaryColor', e.target.value)}
+                    style={{ width: 60, height: 40, border: '1px solid #ddd', borderRadius: 4, cursor: 'pointer' }}
+                  />
+                  <TextField
+                    size="small"
+                    value={settings.primaryColor}
+                    onChange={(e) => handleChange('primaryColor', e.target.value)}
+                    sx={{ flex: 1 }}
+                  />
+                </Box>
+                <Typography variant="caption" color="text.secondary">
+                  Botones, enlaces y elementos destacados
+                </Typography>
+              </Box>
+
+              <Box>
+                <Typography variant="subtitle2" gutterBottom fontWeight="600">
+                  Color Secundario
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                  <input
+                    type="color"
+                    value={settings.secondaryColor}
+                    onChange={(e) => handleChange('secondaryColor', e.target.value)}
+                    style={{ width: 60, height: 40, border: '1px solid #ddd', borderRadius: 4, cursor: 'pointer' }}
+                  />
+                  <TextField
+                    size="small"
+                    value={settings.secondaryColor}
+                    onChange={(e) => handleChange('secondaryColor', e.target.value)}
+                    sx={{ flex: 1 }}
+                  />
+                </Box>
+                <Typography variant="caption" color="text.secondary">
+                  Gradientes y elementos secundarios
+                </Typography>
+              </Box>
+
+              <Divider />
+
+              {/* Preview de colores */}
+              <Card variant="outlined">
+                <CardContent>
+                  <Typography variant="subtitle2" gutterBottom fontWeight="600">
+                    Vista Previa
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+                    <Button
+                      variant="contained"
+                      sx={{ backgroundColor: settings.primaryColor }}
+                    >
+                      Botón Primario
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      sx={{ borderColor: settings.secondaryColor, color: settings.secondaryColor }}
+                    >
+                      Secundario
+                    </Button>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Box>
+          </Paper>
+        </Grid>
+
+        {/* Información de Contacto */}
         <Grid item xs={12} md={6}>
           <Paper sx={{ p: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-              <Shield size={24} color="#1976d2" />
-              <Typography variant="h6">Información de la Tienda</Typography>
+              <Mail size={24} color="#4caf50" />
+              <Typography variant="h6" fontWeight="bold">Información de Contacto</Typography>
             </Box>
+
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <TextField
-                fullWidth
-                label="Nombre de la Tienda"
-                value={settings.storeName}
-                onChange={(e) => handleChange('storeName', e.target.value)}
-              />
               <TextField
                 fullWidth
                 label="Email de Contacto"
                 type="email"
-                value={settings.storeEmail}
-                onChange={(e) => handleChange('storeEmail', e.target.value)}
+                value={settings.email}
+                onChange={(e) => handleChange('email', e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Mail size={18} />
+                    </InputAdornment>
+                  ),
+                }}
               />
+
               <TextField
                 fullWidth
                 label="Teléfono"
-                value={settings.storePhone}
-                onChange={(e) => handleChange('storePhone', e.target.value)}
+                value={settings.phone}
+                onChange={(e) => handleChange('phone', e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Phone size={18} />
+                    </InputAdornment>
+                  ),
+                }}
               />
+
               <TextField
                 fullWidth
                 label="Dirección"
                 multiline
                 rows={2}
-                value={settings.storeAddress}
-                onChange={(e) => handleChange('storeAddress', e.target.value)}
+                value={settings.address}
+                onChange={(e) => handleChange('address', e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <MapPin size={18} />
+                    </InputAdornment>
+                  ),
+                }}
               />
             </Box>
           </Paper>
         </Grid>
 
-        {/* Configuración de Ventas */}
+        {/* Redes Sociales */}
         <Grid item xs={12} md={6}>
           <Paper sx={{ p: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-              <Mail size={24} color="#4caf50" />
-              <Typography variant="h6">Configuración de Ventas</Typography>
+              <Facebook size={24} color="#1877f2" />
+              <Typography variant="h6" fontWeight="bold">Redes Sociales</Typography>
             </Box>
+
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <TextField
                 fullWidth
-                label="Tasa de Impuesto (%)"
-                type="number"
-                value={settings.taxRate}
-                onChange={(e) => handleChange('taxRate', parseFloat(e.target.value))}
-                inputProps={{ min: 0, max: 100, step: 0.1 }}
+                label="Facebook"
+                placeholder="https://facebook.com/tutienda"
+                value={settings.facebook}
+                onChange={(e) => handleChange('facebook', e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Facebook size={18} />
+                    </InputAdornment>
+                  ),
+                }}
               />
+
               <TextField
                 fullWidth
-                label="Umbral de Envío Gratis ($)"
-                type="number"
-                value={settings.freeShippingThreshold}
-                onChange={(e) => handleChange('freeShippingThreshold', parseFloat(e.target.value))}
-                inputProps={{ min: 0, step: 100 }}
-                helperText="Órdenes superiores a este monto tendrán envío gratis"
+                label="Instagram"
+                placeholder="https://instagram.com/tutienda"
+                value={settings.instagram}
+                onChange={(e) => handleChange('instagram', e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Instagram size={18} />
+                    </InputAdornment>
+                  ),
+                }}
               />
-              <Alert severity="info" sx={{ mt: 1 }}>
-                IVA actual: {settings.taxRate}%<br/>
-                Envío gratis: ${settings.freeShippingThreshold}+
-              </Alert>
-            </Box>
-          </Paper>
-        </Grid>
 
-        {/* Notificaciones */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-              <Bell size={24} color="#ff9800" />
-              <Typography variant="h6">Notificaciones</Typography>
-            </Box>
-            <List>
-              <ListItem>
-                <ListItemText
-                  primary="Notificaciones por Email"
-                  secondary="Recibir emails de nuevas órdenes"
-                />
-                <ListItemSecondaryAction>
-                  <Switch
-                    checked={settings.emailNotifications}
-                    onChange={(e) => handleChange('emailNotifications', e.target.checked)}
-                    color="primary"
-                  />
-                </ListItemSecondaryAction>
-              </ListItem>
-              <Divider />
-              <ListItem>
-                <ListItemText
-                  primary="Notificaciones de Órdenes"
-                  secondary="Alertas de nuevas órdenes en el sistema"
-                />
-                <ListItemSecondaryAction>
-                  <Switch
-                    checked={settings.orderNotifications}
-                    onChange={(e) => handleChange('orderNotifications', e.target.checked)}
-                    color="primary"
-                  />
-                </ListItemSecondaryAction>
-              </ListItem>
-              <Divider />
-              <ListItem>
-                <ListItemText
-                  primary="Alertas de Stock Bajo"
-                  secondary="Notificar cuando productos tengan poco stock"
-                />
-                <ListItemSecondaryAction>
-                  <Switch
-                    checked={settings.lowStockAlerts}
-                    onChange={(e) => handleChange('lowStockAlerts', e.target.checked)}
-                    color="primary"
-                  />
-                </ListItemSecondaryAction>
-              </ListItem>
-            </List>
-          </Paper>
-        </Grid>
-
-        {/* Mantenimiento y Base de Datos */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-              <Database size={24} color="#f44336" />
-              <Typography variant="h6">Mantenimiento</Typography>
-            </Box>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={settings.maintenanceMode}
-                    onChange={(e) => handleChange('maintenanceMode', e.target.checked)}
-                    color="warning"
-                  />
-                }
-                label="Modo Mantenimiento"
-              />
-              <Alert severity="warning">
-                {settings.maintenanceMode
-                  ? '⚠️ La tienda está en modo mantenimiento. Los clientes no podrán realizar compras.'
-                  : 'La tienda está operando normalmente.'}
-              </Alert>
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                Acciones de Base de Datos
-              </Typography>
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<Database />}
-                onClick={handleResetDatabase}
+              <TextField
                 fullWidth
-              >
-                Resetear Base de Datos
-              </Button>
-              <Typography variant="caption" color="text.secondary">
-                ⚠️ Esta acción eliminará todos los datos excepto usuarios admin
-              </Typography>
+                label="Twitter"
+                placeholder="https://twitter.com/tutienda"
+                value={settings.twitter}
+                onChange={(e) => handleChange('twitter', e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Twitter size={18} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
             </Box>
+          </Paper>
+        </Grid>
+
+        {/* Configuración de E-commerce */}
+        <Grid item xs={12}>
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
+              Configuración de E-commerce
+            </Typography>
+
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6} md={3}>
+                <TextField
+                  fullWidth
+                  label="Símbolo de Moneda"
+                  value={settings.currency}
+                  onChange={(e) => handleChange('currency', e.target.value)}
+                  helperText="Ej: $, €, USD"
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6} md={3}>
+                <TextField
+                  fullWidth
+                  label="Tasa de Impuesto (%)"
+                  type="number"
+                  value={settings.taxRate}
+                  onChange={(e) => handleChange('taxRate', parseFloat(e.target.value))}
+                  inputProps={{ min: 0, max: 100, step: 0.1 }}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6} md={3}>
+                <TextField
+                  fullWidth
+                  label={`Costo de Envío (${settings.currency})`}
+                  type="number"
+                  value={settings.shippingCost}
+                  onChange={(e) => handleChange('shippingCost', parseFloat(e.target.value))}
+                  inputProps={{ min: 0, step: 10 }}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6} md={3}>
+                <TextField
+                  fullWidth
+                  label={`Envío Gratis desde (${settings.currency})`}
+                  type="number"
+                  value={settings.freeShippingThreshold}
+                  onChange={(e) => handleChange('freeShippingThreshold', parseFloat(e.target.value))}
+                  inputProps={{ min: 0, step: 100 }}
+                />
+              </Grid>
+            </Grid>
+
+            <Alert severity="info" sx={{ mt: 3 }}>
+              <strong>Resumen:</strong> IVA {settings.taxRate}% | Envío {settings.currency}{settings.shippingCost} | Envío gratis en compras superiores a {settings.currency}{settings.freeShippingThreshold}
+            </Alert>
           </Paper>
         </Grid>
 
@@ -244,48 +450,18 @@ const Settings = () => {
               size="large"
               startIcon={<Save />}
               onClick={handleSave}
-              disabled={saved}
+              disabled={loading || saved}
+              sx={{
+                minWidth: 200,
+                backgroundColor: '#667eea',
+                '&:hover': {
+                  backgroundColor: '#5568d3'
+                }
+              }}
             >
-              {saved ? 'Guardado' : 'Guardar Configuración'}
+              {loading ? 'Guardando...' : saved ? 'Guardado ✓' : 'Guardar Cambios'}
             </Button>
           </Box>
-        </Grid>
-
-        {/* Información del Sistema */}
-        <Grid item xs={12}>
-          <Card variant="outlined">
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Información del Sistema
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Typography variant="caption" color="text.secondary">
-                    Versión
-                  </Typography>
-                  <Typography variant="body1">1.0.0</Typography>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Typography variant="caption" color="text.secondary">
-                    Backend
-                  </Typography>
-                  <Typography variant="body1">Node.js + Express</Typography>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Typography variant="caption" color="text.secondary">
-                    Frontend
-                  </Typography>
-                  <Typography variant="body1">React + Vite</Typography>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <Typography variant="caption" color="text.secondary">
-                    Base de Datos
-                  </Typography>
-                  <Typography variant="body1">SQLite</Typography>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
         </Grid>
       </Grid>
     </Container>

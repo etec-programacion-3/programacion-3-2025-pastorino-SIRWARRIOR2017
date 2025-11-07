@@ -13,16 +13,26 @@ module.exports = {
         }]
       });
 
-      // Calcular totales
+      // Calcular totales y filtrar productos inactivos
       let subtotal = 0;
       const validItems = [];
+      const inactiveItemIds = [];
 
       for (const item of items) {
         if (item.Product && item.Product.isActive) {
           const itemTotal = parseFloat(item.Product.price) * item.quantity;
           subtotal += itemTotal;
           validItems.push(item);
+        } else {
+          // Producto inactivo o eliminado - marcar para limpieza
+          inactiveItemIds.push(item.id);
         }
+      }
+
+      // Limpiar automáticamente items de productos inactivos
+      if (inactiveItemIds.length > 0) {
+        await CartItem.destroy({ where: { id: inactiveItemIds } });
+        console.log(`Limpiados ${inactiveItemIds.length} items inactivos del carrito del usuario ${userId}`);
       }
 
       const tax = subtotal * 0.16; // 16% IVA
