@@ -60,6 +60,7 @@ const ProductsManagement = () => {
   const [currentTab, setCurrentTab] = useState(0);
   const [newSpec, setNewSpec] = useState({ label: '', value: '' });
   const [newSectionTitle, setNewSectionTitle] = useState('');
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, productId: null, productName: '' });
 
   useEffect(() => {
     fetchProducts();
@@ -153,7 +154,7 @@ const ProductsManagement = () => {
       });
       // Mostrar preview de imagen existente
       if (product.images && product.images.length > 0) {
-        setImagePreview(`import.meta.env.VITE_API_BASE_URL + product.images[0]}`);
+        setImagePreview(`http://localhost:3000${product.images[0]}`);
       } else {
         setImagePreview(null);
       }
@@ -347,18 +348,31 @@ const ProductsManagement = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('¿Estás seguro de eliminar este producto?')) return;
+  const handleOpenDeleteDialog = (product) => {
+    setDeleteDialog({
+      open: true,
+      productId: product.id,
+      productName: product.name
+    });
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setDeleteDialog({ open: false, productId: null, productName: '' });
+  };
+
+  const handleConfirmDelete = async () => {
+    const { productId } = deleteDialog;
 
     try {
       const token = localStorage.getItem('token');
 
       if (!token) {
         toast.error('No hay sesión activa. Por favor, inicia sesión nuevamente.');
+        handleCloseDeleteDialog();
         return;
       }
 
-      const response = await axios.delete(`${API_BASE_URL}/products/${id}`, {
+      const response = await axios.delete(`${API_BASE_URL}/products/${productId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -374,11 +388,13 @@ const ProductsManagement = () => {
         toast.success(response.data.message || 'Producto eliminado exitosamente');
       }
 
+      handleCloseDeleteDialog();
       fetchProducts();
     } catch (err) {
       console.error('Error al eliminar:', err);
       const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'Error al eliminar producto';
       toast.error(errorMessage);
+      handleCloseDeleteDialog();
     }
   };
 
@@ -452,7 +468,7 @@ const ProductsManagement = () => {
                   <Box
                     component="img"
                     src={product.images && product.images.length > 0
-                      ? `import.meta.env.VITE_API_BASE_URL + product.images[0]}`
+                      ? `http://localhost:3000${product.images[0]}`
                       : 'https://via.placeholder.com/50?text=Sin+Imagen'}
                     alt={product.name}
                     sx={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 1 }}
@@ -490,7 +506,7 @@ const ProductsManagement = () => {
                   </IconButton>
                   <IconButton
                     color="error"
-                    onClick={() => handleDelete(product.id)}
+                    onClick={() => handleOpenDeleteDialog(product)}
                     size="small"
                   >
                     <Trash2 size={18} />
@@ -791,6 +807,41 @@ const ProductsManagement = () => {
             startIcon={<Save />}
           >
             Guardar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Diálogo de confirmación de eliminación */}
+      <Dialog
+        open={deleteDialog.open}
+        onClose={handleCloseDeleteDialog}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Confirmar Eliminación</DialogTitle>
+        <DialogContent>
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            Esta acción no se puede deshacer
+          </Alert>
+          <Typography>
+            ¿Estás seguro de que deseas eliminar el producto{' '}
+            <strong>{deleteDialog.productName}</strong>?
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+            Si este producto tiene órdenes asociadas, será desactivado en lugar de eliminado permanentemente.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteDialog} color="inherit">
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleConfirmDelete}
+            variant="contained"
+            color="error"
+            startIcon={<Trash2 size={18} />}
+          >
+            Eliminar
           </Button>
         </DialogActions>
       </Dialog>

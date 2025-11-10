@@ -1,7 +1,6 @@
 import axios from 'axios';
-import API_CONFIG from '../config/api';
 
-const API_BASE_URL = API_CONFIG.API_URL;
+const API_BASE_URL = 'http://localhost:3000/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -55,6 +54,15 @@ export const getProductById = async (id) => {
     return response.data;
   } catch (error) {
     throw new Error('Error al obtener el producto');
+  }
+};
+
+export const getCategories = async () => {
+  try {
+    const response = await api.get('/categories');
+    return response.data;
+  } catch (error) {
+    throw new Error('Error al obtener las categorías');
   }
 };
 
@@ -215,5 +223,16 @@ export const clearCart = async () => {
   } catch (error) {
     const msg = error.response?.data?.error || "Error al limpiar el carrito";
     throw new Error(msg);
+  }
+};
+
+// ========== SERVICE REQUESTS ==========
+export const getServiceRequests = async () => {
+  try {
+    const response = await api.get("/service-requests");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching service requests:", error);
+    throw error;
   }
 };

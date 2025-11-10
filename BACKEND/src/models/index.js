@@ -6,7 +6,6 @@ const Order = require('./Order');
 const OrderItem = require('./OrderItem');
 const ServiceRequest = require('./ServiceRequest');
 const CartItem = require('./CartItem');
-const TimeSlot = require('./TimeSlot');
 const SiteSettings = require('./SiteSettings');
 
 // Definir relaciones
@@ -38,10 +37,6 @@ Product.belongsTo(Category, { foreignKey: 'categoryId' });
 User.hasMany(ServiceRequest, { foreignKey: 'userId' });
 ServiceRequest.belongsTo(User, { foreignKey: 'userId' });
 
-// TimeSlot - ServiceRequest
-TimeSlot.hasMany(ServiceRequest, { foreignKey: 'timeSlotId' });
-ServiceRequest.belongsTo(TimeSlot, { foreignKey: 'timeSlotId' });
-
 module.exports = {
   sequelize,
   User,
@@ -51,6 +46,5 @@ module.exports = {
   OrderItem,
   ServiceRequest,
   CartItem,
-  TimeSlot,
   SiteSettings
 };

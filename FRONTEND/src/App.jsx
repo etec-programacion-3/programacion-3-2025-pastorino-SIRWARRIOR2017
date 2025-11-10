@@ -10,7 +10,6 @@ import Register from './pages/Register';
 import TechnicalService from './pages/TechnicalService';
 import Checkout from './pages/Checkout';
 import OAuthCallback from './pages/OAuthCallback';
-import MyOrders from './pages/MyOrders';
 import PCBuilder from './pages/PCBuilder';
 
 // User Pages

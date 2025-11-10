@@ -25,9 +25,8 @@ import toast from 'react-hot-toast';
 import CartContext from '../contexts/CartContext';
 import AuthContext from '../contexts/AuthContext';
 import axios from 'axios';
-import API_CONFIG from '../config/api';
 
-const API_BASE_URL = API_CONFIG.API_URL;
+const API_BASE_URL = 'http://localhost:3000/api';
 
 const steps = ['Revisar Orden', 'Información de Envío', 'Método de Pago', 'Confirmar'];
 
@@ -265,7 +264,7 @@ const Checkout = () => {
                     <Avatar
                       src={
                         item.images?.[0]
-                          ? API_CONFIG.BASE_URL + item.images[0]
+                          ? `http://localhost:3000${item.images[0]}`
                           : 'https://via.placeholder.com/60?text=Sin+Imagen'
                       }
                       variant="rounded"
@@ -278,7 +277,7 @@ const Checkout = () => {
                     sx={{ ml: 2 }}
                   />
                   <Typography variant="body1" fontWeight="bold">
-                    ${(item.price * item.quantity).toFixed(2)}
+                    ${(parseFloat(item.price || 0) * item.quantity).toFixed(2)}
                   </Typography>
                 </ListItem>
               ))}

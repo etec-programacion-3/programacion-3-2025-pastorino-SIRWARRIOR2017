@@ -103,7 +103,7 @@ const Header = () => {
             {config.logo ? (
               <Box
                 component="img"
-                src={`import.meta.env.VITE_API_BASE_URL + config.logo}`}
+                src={`http://localhost:3000${config.logo}`}
                 alt={config.siteName}
                 sx={{
                   height: scrolled ? 70 : 110,

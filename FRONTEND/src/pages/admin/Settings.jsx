@@ -51,7 +51,7 @@ const Settings = () => {
       const data = await api.getSiteSettings();
       setSettings(data);
       if (data.logo) {
-        setLogoPreview(`import.meta.env.VITE_API_BASE_URL + data.logo}`);
+        setLogoPreview(`http://localhost:3000${data.logo}`);
       }
     } catch (err) {
       console.error('Error loading settings:', err);

@@ -336,7 +336,7 @@ const Products = () => {
                       component="img"
                       image={
                         product.images?.[0]
-                          ? `import.meta.env.VITE_API_BASE_URL + product.images[0]}`
+                          ? `http://localhost:3000${product.images[0]}`
                           : 'https://via.placeholder.com/300x240?text=PC+Component'
                       }
                       alt={product.name}
@@ -414,7 +414,7 @@ const Products = () => {
                         variant="h5"
                         sx={{ color: 'primary.main', fontWeight: 800 }}
                       >
-                        ${product.price?.toFixed(2) || '0.00'}
+                        ${parseFloat(product.price || 0).toFixed(2)}
                       </Typography>
                       {product.originalPrice && (
                         <Typography

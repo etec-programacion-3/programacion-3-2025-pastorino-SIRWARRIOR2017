@@ -110,7 +110,7 @@ const ProductDetail = () => {
               }}
               image={
                 product.images?.[0]
-                  ? `import.meta.env.VITE_API_BASE_URL + product.images[0]}`
+                  ? `http://localhost:3000${product.images[0]}`
                   : 'https://via.placeholder.com/500?text=Sin+Imagen'
               }
               alt={product.name}

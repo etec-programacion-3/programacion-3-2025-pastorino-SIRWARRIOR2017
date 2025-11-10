@@ -318,7 +318,7 @@ const PCBuilder = () => {
             <Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                 <Avatar
-                  src={selected.images?.[0] ? `import.meta.env.VITE_API_BASE_URL + selected.images[0]}` : ''}
+                  src={selected.images?.[0] ? `http://localhost:3000${selected.images[0]}` : ''}
                   sx={{ width: 50, height: 50 }}
                 />
                 <Box sx={{ flex: 1 }}>
@@ -539,7 +539,7 @@ const PCBuilder = () => {
                 >
                   <ListItemAvatar>
                     <Avatar
-                      src={product.images?.[0] ? `import.meta.env.VITE_API_BASE_URL + product.images[0]}` : ''}
+                      src={product.images?.[0] ? `http://localhost:3000${product.images[0]}` : ''}
                       variant="rounded"
                       sx={{ width: 60, height: 60 }}
                     />

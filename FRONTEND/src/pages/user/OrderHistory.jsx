@@ -128,7 +128,7 @@ const OrderCard = ({ order }) => {
                             component="img"
                             src={
                               item.Product?.images?.[0]
-                                ? `import.meta.env.VITE_API_BASE_URL + item.Product.images[0]}`
+                                ? `http://localhost:3000${item.Product.images[0]}`
                                 : 'https://via.placeholder.com/40?text=Sin+Imagen'
                             }
                             alt={item.Product?.name}

@@ -26,7 +26,6 @@ import { Plus, Minus, Trash2, ShoppingBag, ArrowLeft, AlertTriangle } from 'luci
 import toast from 'react-hot-toast';
 import CartContext from '../contexts/CartContext';
 import AuthContext from '../contexts/AuthContext';
-import { getResourceUrl } from '../config/api';
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -185,7 +184,7 @@ const Cart = () => {
                             component="img"
                             src={
                               item.images?.[0]
-                                ? getResourceUrl(item.images[0])
+                                ? `http://localhost:3000${item.images[0]}`
                                 : 'https://via.placeholder.com/60?text=Sin+Imagen'
                             }
                             alt={item.name}
@@ -225,7 +224,7 @@ const Cart = () => {
                       </TableCell>
                       <TableCell align="right">
                         <Typography sx={{ color: '#667eea', fontWeight: 'bold' }}>
-                          ${item.price?.toFixed(2)}
+                          ${parseFloat(item.price || 0).toFixed(2)}
                         </Typography>
                       </TableCell>
                       <TableCell align="center">
@@ -303,7 +302,7 @@ const Cart = () => {
                       </TableCell>
                       <TableCell align="right">
                         <Typography sx={{ fontWeight: 'bold' }}>
-                          ${(item.price * item.quantity).toFixed(2)}
+                          ${(parseFloat(item.price || 0) * item.quantity).toFixed(2)}
                         </Typography>
                       </TableCell>
                       <TableCell align="center">
