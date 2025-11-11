@@ -100,55 +100,33 @@ const Header = () => {
               mr: { md: 6 },
             }}
           >
-            {config.logo ? (
+            {config.logo && (
               <Box
                 component="img"
                 src={`http://localhost:3000${config.logo}`}
                 alt={config.siteName}
                 sx={{
-                  height: scrolled ? 70 : 110,
-                  maxWidth: scrolled ? 260 : 350,
+                  height: scrolled ? 50 : 70,
                   width: 'auto',
                   objectFit: 'contain',
                   transition: 'all 0.3s ease',
                   filter: scrolled ? 'none' : 'drop-shadow(0 3px 10px rgba(0,0,0,0.2))',
                 }}
               />
-            ) : (
-              <>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 2,
-                    background: scrolled
-                      ? 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)'
-                      : 'rgba(255,255,255,0.2)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 800,
-                    fontSize: '1.2rem',
-                    color: scrolled ? 'white' : 'white',
-                    transition: 'all 0.3s ease',
-                  }}
-                >
-                  {config.siteName?.substring(0, 2).toUpperCase() || 'PC'}
-                </Box>
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 800,
-                    fontSize: '1.4rem',
-                    color: scrolled ? 'primary.main' : 'white',
-                    letterSpacing: '-0.02em',
-                    transition: 'color 0.3s ease',
-                  }}
-                >
-                  {config.siteName || 'PC Store'}
-                </Typography>
-              </>
             )}
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 800,
+                fontSize: scrolled ? '1.2rem' : '1.4rem',
+                color: scrolled ? 'primary.main' : 'white',
+                letterSpacing: '-0.02em',
+                transition: 'all 0.3s ease',
+                ml: config.logo ? 1.5 : 0,
+              }}
+            >
+              {config.siteName || 'PC Store'}
+            </Typography>
           </Box>
 
           {/* Navigation */}

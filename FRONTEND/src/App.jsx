@@ -37,7 +37,6 @@ const ServiceHistory = lazy(() => import('./pages/user/ServiceHistory'));
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
 const ProductsManagement = lazy(() => import('./pages/admin/ProductsManagement'));
 const OrdersManagement = lazy(() => import('./pages/admin/OrdersManagement'));
-const ServiceRequestsManagement = lazy(() => import('./pages/admin/ServiceRequestsManagement'));
 const UsersManagement = lazy(() => import('./pages/admin/UsersManagement'));
 const Reports = lazy(() => import('./pages/admin/Reports'));
 const Settings = lazy(() => import('./pages/admin/Settings'));
@@ -95,11 +94,6 @@ function App() {
           <Route path="admin/orders" element={
             <ProtectedRoute requireAdmin={true}>
               <OrdersManagement />
-            </ProtectedRoute>
-          } />
-          <Route path="admin/service-requests" element={
-            <ProtectedRoute requireAdmin={true}>
-              <ServiceRequestsManagement />
             </ProtectedRoute>
           } />
           <Route path="admin/users" element={

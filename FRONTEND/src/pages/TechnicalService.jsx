@@ -1,7 +1,11 @@
+import { useContext } from 'react';
 import { Container, Box, Typography, Card, CardContent, Grid, Paper, Divider } from '@mui/material';
 import { Phone, Mail, Clock, MapPin, Wrench, CheckCircle } from 'lucide-react';
+import SiteConfigContext from '../contexts/SiteConfigContext';
 
 const TechnicalService = () => {
+  const { config } = useContext(SiteConfigContext);
+
   return (
     <Container maxWidth="lg" sx={{ py: 6 }}>
       {/* Encabezado */}
@@ -36,7 +40,7 @@ const TechnicalService = () => {
                   Llámanos
                 </Typography>
                 <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-                  +54 11 1234-5678
+                  {config.phone || '+54 11 1234-5678'}
                 </Typography>
               </Box>
             </Box>
@@ -47,7 +51,7 @@ const TechnicalService = () => {
                   Escríbenos
                 </Typography>
                 <Typography variant="h6">
-                  soporte@pcstore.com
+                  {config.email || 'soporte@pcstore.com'}
                 </Typography>
               </Box>
             </Box>
@@ -107,15 +111,39 @@ const TechnicalService = () => {
                 </Typography>
               </Box>
               <Divider sx={{ mb: 2 }} />
-              <Typography variant="body1" sx={{ mb: 1 }}>
-                Av. Corrientes 1234
+              <Typography variant="body1" sx={{ whiteSpace: 'pre-line', mb: 2 }}>
+                {config.address || 'Av. Corrientes 1234\nCiudad Autónoma de Buenos Aires\nArgentina, C1043'}
               </Typography>
-              <Typography variant="body1" sx={{ mb: 1 }}>
-                Ciudad Autónoma de Buenos Aires
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                Argentina, C1043
-              </Typography>
+              {config.googleMapsUrl && (
+                <Box
+                  component="a"
+                  href={config.googleMapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    mt: 2,
+                    px: 2,
+                    py: 1,
+                    backgroundColor: '#667eea',
+                    color: 'white',
+                    borderRadius: 2,
+                    textDecoration: 'none',
+                    fontWeight: 600,
+                    transition: 'all 0.2s',
+                    '&:hover': {
+                      backgroundColor: '#5568d3',
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)'
+                    }
+                  }}
+                >
+                  <MapPin size={20} />
+                  Ver en Google Maps
+                </Box>
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -166,13 +194,13 @@ const TechnicalService = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Phone size={20} color="#667eea" />
             <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#667eea' }}>
-              +54 11 1234-5678
+              {config.phone || '+54 11 1234-5678'}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Mail size={20} color="#667eea" />
             <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#667eea' }}>
-              soporte@pcstore.com
+              {config.email || 'soporte@pcstore.com'}
             </Typography>
           </Box>
         </Box>
