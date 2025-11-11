@@ -131,47 +131,4 @@ const login = async (req, res) => {
   }
 };
 
-// Google OAuth callback handler
-const googleCallback = async (req, res) => {
-  try {
-    // El usuario ya fue autenticado por Passport
-    const user = req.user;
-
-    if (!user) {
-      logger.warn('Google OAuth callback without user');
-      return res.redirect(`${process.env.FRONTEND_URL}/login?error=authentication_failed`);
-    }
-
-    // Validar que JWT_SECRET esté configurado
-    if (!process.env.JWT_SECRET) {
-      logger.error('JWT_SECRET not configured - cannot generate token');
-      return res.redirect(`${process.env.FRONTEND_URL}/login?error=server_error`);
-    }
-
-    // Generar token JWT
-    const token = jwt.sign(
-      { id: user.id },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
-    );
-
-    const publicUser = {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      picture: user.picture
-    };
-
-    logger.info(`User logged in via Google OAuth: ${user.email}`);
-
-    // Redirigir al frontend con el token y usuario
-    const userData = encodeURIComponent(JSON.stringify(publicUser));
-    res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}&user=${userData}`);
-  } catch (error) {
-    logger.error('Google callback error:', error);
-    res.redirect(`${process.env.FRONTEND_URL}/login?error=server_error`);
-  }
-};
-
-module.exports = { register, login, googleCallback };
+module.exports = { register, login };

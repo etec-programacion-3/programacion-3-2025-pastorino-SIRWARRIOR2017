@@ -11,13 +11,14 @@ Sistema completo de e-commerce para venta de componentes de computadoras con pan
 ### Funcionalidades Principales
 
 #### Para Clientes:
-- 🔐 Registro e inicio de sesión (email/contraseña o Google OAuth)
+- 🔐 Registro e inicio de sesión con email y contraseña
 - 🛍️ Catálogo de productos con búsqueda y filtros por categoría
 - 🛒 Carrito de compras con gestión de cantidades
 - 💳 Proceso de checkout y pago
 - 📦 Historial de órdenes de compra
-- 🔧 Solicitudes de servicio técnico
+- 🔧 Información de servicio técnico
 - 👤 Perfil de usuario
+- 🖥️ PC Builder - Constructor de PC personalizado
 
 #### Para Administradores:
 - 📊 Dashboard con estadísticas y gráficos
@@ -69,10 +70,6 @@ NODE_ENV=development
 
 # Nivel de logging (error, warn, info, http, debug)
 LOG_LEVEL=debug
-
-# Google OAuth (opcional, ya configurado)
-GOOGLE_CLIENT_ID=tu_google_client_id
-GOOGLE_CLIENT_SECRET=tu_google_client_secret
 ```
 
 **IMPORTANTE:** Nunca uses el valor por defecto de `JWT_SECRET` en producción. Genera uno seguro:
@@ -143,8 +140,7 @@ Contraseña: admin123
 ```
 
 ### Usuario Cliente
-- Puedes crear una cuenta nueva con email y contraseña
-- O usar el botón "Iniciar sesión con Google" (ya configurado)
+- Puedes crear una cuenta nueva con email y contraseña desde la página de registro
 
 ---
 
@@ -303,7 +299,7 @@ Content-Type: application/json
 ### Backend
 - **Node.js** + **Express** - Servidor y API REST
 - **Sequelize** + **SQLite** - ORM y base de datos
-- **Passport.js** + **JWT** - Autenticación y autorización
+- **JWT (jsonwebtoken)** - Autenticación y autorización
 - **Multer** - Carga de imágenes
 - **bcrypt** - Encriptación de contraseñas
 - **Helmet.js** - Headers de seguridad HTTP
@@ -431,12 +427,6 @@ cd FRONTEND
 rm -rf node_modules package-lock.json
 npm install
 ```
-
-### Google OAuth no funciona
-
-- Asegúrate de que el backend esté corriendo en `http://localhost:3000`
-- Asegúrate de que el frontend esté corriendo en `http://localhost:5173`
-- Las credenciales OAuth están configuradas para estos puertos específicos
 
 ### Las imágenes no se ven
 

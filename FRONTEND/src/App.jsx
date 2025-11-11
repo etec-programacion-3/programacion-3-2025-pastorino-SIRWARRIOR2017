@@ -26,7 +26,6 @@ const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const TechnicalService = lazy(() => import('./pages/TechnicalService'));
 const Checkout = lazy(() => import('./pages/Checkout'));
-const OAuthCallback = lazy(() => import('./pages/OAuthCallback'));
 const PCBuilder = lazy(() => import('./pages/PCBuilder'));
 
 // Lazy loading de páginas de usuario
@@ -64,7 +63,6 @@ function App() {
           <Route path="technical-service" element={<TechnicalService />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
-          <Route path="auth/callback" element={<OAuthCallback />} />
 
           {/* Protected User Routes */}
           <Route path="profile" element={

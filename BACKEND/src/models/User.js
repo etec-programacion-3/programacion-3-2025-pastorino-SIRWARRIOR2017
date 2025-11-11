@@ -26,19 +26,10 @@ const User = sequelize.define('User', {
   },
   password: {
     type: DataTypes.STRING,
-    allowNull: true, // Cambiado a true para usuarios de Google OAuth
+    allowNull: false,
     validate: {
       len: [6, 255]
     }
-  },
-  googleId: {
-    type: DataTypes.STRING,
-    allowNull: true,
-    unique: true
-  },
-  picture: {
-    type: DataTypes.STRING,
-    allowNull: true
   },
   role: {
     type: DataTypes.ENUM('customer', 'admin'),
