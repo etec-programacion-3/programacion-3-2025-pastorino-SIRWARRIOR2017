@@ -1,36 +1,55 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { CircularProgress, Box } from '@mui/material';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
-import Home from './pages/Home';
-import Products from './pages/Products';
-import ProductDetail from './pages/ProductDetail';
-import Cart from './pages/Cart';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import TechnicalService from './pages/TechnicalService';
-import Checkout from './pages/Checkout';
-import OAuthCallback from './pages/OAuthCallback';
-import PCBuilder from './pages/PCBuilder';
+import ErrorBoundary from './components/ErrorBoundary';
 
-// User Pages
-import Profile from './pages/user/Profile';
-import OrderHistory from './pages/user/OrderHistory';
-import ServiceHistory from './pages/user/ServiceHistory';
+// Componente de loading
+const LoadingFallback = () => (
+  <Box
+    display="flex"
+    justifyContent="center"
+    alignItems="center"
+    minHeight="60vh"
+  >
+    <CircularProgress />
+  </Box>
+);
 
-// Admin Pages
-import AdminDashboard from './pages/admin/Dashboard';
-import ProductsManagement from './pages/admin/ProductsManagement';
-import OrdersManagement from './pages/admin/OrdersManagement';
-import ServiceRequestsManagement from './pages/admin/ServiceRequestsManagement';
-import UsersManagement from './pages/admin/UsersManagement';
-import Reports from './pages/admin/Reports';
-import Settings from './pages/admin/Settings';
+// Lazy loading de páginas públicas
+const Home = lazy(() => import('./pages/Home'));
+const Products = lazy(() => import('./pages/Products'));
+const ProductDetail = lazy(() => import('./pages/ProductDetail'));
+const Cart = lazy(() => import('./pages/Cart'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const TechnicalService = lazy(() => import('./pages/TechnicalService'));
+const Checkout = lazy(() => import('./pages/Checkout'));
+const OAuthCallback = lazy(() => import('./pages/OAuthCallback'));
+const PCBuilder = lazy(() => import('./pages/PCBuilder'));
+
+// Lazy loading de páginas de usuario
+const Profile = lazy(() => import('./pages/user/Profile'));
+const OrderHistory = lazy(() => import('./pages/user/OrderHistory'));
+const ServiceHistory = lazy(() => import('./pages/user/ServiceHistory'));
+
+// Lazy loading de páginas de admin
+const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
+const ProductsManagement = lazy(() => import('./pages/admin/ProductsManagement'));
+const OrdersManagement = lazy(() => import('./pages/admin/OrdersManagement'));
+const ServiceRequestsManagement = lazy(() => import('./pages/admin/ServiceRequestsManagement'));
+const UsersManagement = lazy(() => import('./pages/admin/UsersManagement'));
+const Reports = lazy(() => import('./pages/admin/Reports'));
+const Settings = lazy(() => import('./pages/admin/Settings'));
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout />}>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <Suspense fallback={<LoadingFallback />}>
+          <Routes>
+            <Route path="/" element={<Layout />}>
           {/* Public Routes */}
           <Route index element={<Home />} />
           <Route path="products" element={<Products />} />
@@ -100,9 +119,11 @@ function App() {
               <Settings />
             </ProtectedRoute>
           } />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+            </Route>
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

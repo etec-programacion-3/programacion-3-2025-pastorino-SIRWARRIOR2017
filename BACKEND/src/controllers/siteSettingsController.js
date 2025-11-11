@@ -1,3 +1,5 @@
+const logger = require('../utils/logger');
+
 const { SiteSettings } = require('../models');
 const path = require('path');
 const fs = require('fs');
@@ -24,7 +26,7 @@ module.exports = {
 
       res.json(settings);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       res.status(500).json({ error: 'Cannot fetch site settings', details: err.message });
     }
   },
@@ -56,7 +58,7 @@ module.exports = {
 
       res.json(settings);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       res.status(500).json({ error: 'Cannot update site settings', details: err.message });
     }
   },
@@ -86,7 +88,7 @@ module.exports = {
 
       res.json({ logoUrl, settings });
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       res.status(500).json({ error: 'Cannot upload logo', details: err.message });
     }
   },

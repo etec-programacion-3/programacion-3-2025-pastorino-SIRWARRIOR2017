@@ -1,3 +1,5 @@
+const logger = require('../utils/logger');
+
 const { ServiceRequest, User } = require('../models');
 const { sequelize } = require('../config/database');
 
@@ -22,7 +24,7 @@ const getAllServiceRequests = async (req, res) => {
 
     res.json(requests);
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     res.status(500).json({ error: 'Cannot fetch service requests', details: err.message });
   }
 };
@@ -47,7 +49,7 @@ const getServiceRequestById = async (req, res) => {
 
     res.json(request);
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     res.status(500).json({ error: 'Cannot fetch service request', details: err.message });
   }
 };
@@ -87,7 +89,7 @@ const createServiceRequest = async (req, res) => {
 
     res.status(201).json(createdRequest);
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     res.status(500).json({ error: 'Cannot create service request', details: err.message });
   }
 };
@@ -126,7 +128,7 @@ const updateServiceRequest = async (req, res) => {
 
     res.json(request);
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     res.status(500).json({ error: 'Cannot update service request', details: err.message });
   }
 };
@@ -149,7 +151,7 @@ const completeServiceRequest = async (req, res) => {
     await request.markAsCompleted(actualCost, technicianNotes);
     res.json(request);
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     res.status(500).json({ error: 'Cannot complete service request', details: err.message });
   }
 };
@@ -173,7 +175,7 @@ const cancelServiceRequest = async (req, res) => {
 
     res.json(request);
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     res.status(500).json({ error: 'Cannot cancel service request', details: err.message });
   }
 };

@@ -1,3 +1,5 @@
+const logger = require('../utils/logger');
+
 const { Order, OrderItem, CartItem, Product, User, sequelize } = require('../models');
 
 module.exports = {
@@ -37,7 +39,7 @@ module.exports = {
 
       res.json(orders);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       res.status(500).json({ error: 'Cannot fetch orders', details: err.message });
     }
   },
@@ -75,7 +77,7 @@ module.exports = {
 
       res.json(order);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       res.status(500).json({ error: 'Cannot fetch order', details: err.message });
     }
   },
@@ -143,8 +145,8 @@ module.exports = {
       await t.commit();
       res.status(201).json({ orderId: order.id, orderNumber: order.orderNumber });
     } catch (err) {
-      console.error('Checkout error', err);
-      try { await t.rollback(); } catch (e) { console.error('Rollback failed', e); }
+      logger.error('Checkout error', err);
+      try { await t.rollback(); } catch (e) { logger.error('Rollback failed', e); }
       res.status(500).json({ error: 'Checkout failed', details: err.message });
     }
   },
@@ -186,7 +188,7 @@ module.exports = {
 
       res.json(updatedOrder);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       res.status(500).json({ error: 'Cannot update order', details: err.message });
     }
   },
@@ -237,7 +239,7 @@ module.exports = {
         throw err;
       }
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       res.status(500).json({ error: 'Cannot cancel order', details: err.message });
     }
   }

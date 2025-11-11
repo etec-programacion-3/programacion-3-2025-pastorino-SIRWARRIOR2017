@@ -1,0 +1,361 @@
+### PC Store Backend API - Pruebas HTTP
+### Base URL
+@baseUrl = http://localhost:3000
+@token = your_jwt_token_here
+@adminToken = your_admin_jwt_token_here
+
+################################################################################
+### HEALTH CHECK & INFO
+################################################################################
+
+### Health Check
+GET {{baseUrl}}/health
+
+### API Info
+GET {{baseUrl}}/
+
+
+################################################################################
+### AUTH - AUTENTICACIÓN
+################################################################################
+
+### Registrar nuevo usuario
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Juan Pérez",
+  "email": "juan@example.com",
+  "password": "password123",
+  "phone": "+549261234567"
+}
+
+### Login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "juan@example.com",
+  "password": "password123"
+}
+
+### Google OAuth (abrir en navegador)
+# GET {{baseUrl}}/api/auth/google
+
+
+################################################################################
+### PRODUCTS - PRODUCTOS
+################################################################################
+
+### Obtener todos los productos (con paginación y filtros)
+GET {{baseUrl}}/api/products?page=1&limit=10&category=1&minPrice=0&maxPrice=100000&search=
+
+### Obtener producto por ID
+GET {{baseUrl}}/api/products/1
+
+### Crear producto (ADMIN) - sin imagen
+POST {{baseUrl}}/api/products
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Tarjeta Gráfica RTX 4090",
+  "description": "Tarjeta gráfica de alta gama para gaming y diseño",
+  "price": 250000,
+  "stock": 5,
+  "categoryId": 1,
+  "brand": "NVIDIA",
+  "model": "RTX 4090 FE"
+}
+
+### Crear producto (ADMIN) - con imagen (usar form-data)
+# POST {{baseUrl}}/api/products
+# Authorization: Bearer {{adminToken}}
+# Content-Type: multipart/form-data
+#
+# name=Tarjeta Gráfica RTX 4090
+# description=Tarjeta gráfica de alta gama
+# price=250000
+# stock=5
+# categoryId=1
+# brand=NVIDIA
+# model=RTX 4090 FE
+# image=@/path/to/image.jpg
+
+### Actualizar producto (ADMIN)
+PUT {{baseUrl}}/api/products/1
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Tarjeta Gráfica RTX 4090 Ti",
+  "description": "Tarjeta gráfica de ultra alta gama",
+  "price": 280000,
+  "stock": 3
+}
+
+### Actualizar solo stock (ADMIN)
+PATCH {{baseUrl}}/api/products/1/stock
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "stock": 10
+}
+
+### Eliminar producto (ADMIN)
+DELETE {{baseUrl}}/api/products/1
+Authorization: Bearer {{adminToken}}
+
+
+################################################################################
+### CATEGORIES - CATEGORÍAS
+################################################################################
+
+### Obtener todas las categorías
+GET {{baseUrl}}/api/categories
+
+### Obtener categoría por ID
+GET {{baseUrl}}/api/categories/1
+
+### Crear categoría
+POST {{baseUrl}}/api/categories
+Content-Type: application/json
+
+{
+  "name": "Tarjetas Gráficas",
+  "description": "GPUs para gaming y trabajo profesional"
+}
+
+### Actualizar categoría
+PUT {{baseUrl}}/api/categories/1
+Content-Type: application/json
+
+{
+  "name": "Tarjetas Gráficas y GPUs",
+  "description": "Tarjetas gráficas para gaming, diseño y minería"
+}
+
+### Eliminar categoría
+DELETE {{baseUrl}}/api/categories/1
+
+
+################################################################################
+### CART - CARRITO
+################################################################################
+
+### Obtener carrito del usuario
+GET {{baseUrl}}/api/cart
+Authorization: Bearer {{token}}
+
+### Agregar producto al carrito
+POST {{baseUrl}}/api/cart
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "productId": 1,
+  "quantity": 2
+}
+
+### Actualizar cantidad de item en carrito
+PUT {{baseUrl}}/api/cart/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "quantity": 5
+}
+
+### Eliminar item del carrito
+DELETE {{baseUrl}}/api/cart/1
+Authorization: Bearer {{token}}
+
+### Vaciar carrito completo
+DELETE {{baseUrl}}/api/cart
+Authorization: Bearer {{token}}
+
+
+################################################################################
+### ORDERS - ÓRDENES
+################################################################################
+
+### Obtener todas las órdenes del usuario
+GET {{baseUrl}}/api/orders
+Authorization: Bearer {{token}}
+
+### Obtener orden por ID
+GET {{baseUrl}}/api/orders/1
+Authorization: Bearer {{token}}
+
+### Crear orden (Checkout)
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "shippingAddress": "Calle Falsa 123, Ciudad, CP 5500",
+  "shippingMethod": "standard",
+  "paymentMethod": "credit_card",
+  "notes": "Entregar entre 9am-5pm"
+}
+
+### Actualizar orden (dirección de envío o estado)
+PUT {{baseUrl}}/api/orders/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "shippingAddress": "Nueva Dirección 456",
+  "status": "shipped"
+}
+
+### Cancelar orden
+POST {{baseUrl}}/api/orders/1/cancel
+Authorization: Bearer {{token}}
+
+
+################################################################################
+### USERS - USUARIOS (ADMIN)
+################################################################################
+
+### Obtener todos los usuarios (ADMIN)
+GET {{baseUrl}}/api/users
+Authorization: Bearer {{adminToken}}
+
+### Obtener usuario por ID (ADMIN)
+GET {{baseUrl}}/api/users/1
+Authorization: Bearer {{adminToken}}
+
+### Actualizar información de usuario (ADMIN)
+PUT {{baseUrl}}/api/users/1
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "name": "Juan Carlos Pérez",
+  "email": "juancarlos@example.com",
+  "phone": "+549261111111"
+}
+
+### Cambiar rol de usuario (ADMIN)
+PATCH {{baseUrl}}/api/users/1/role
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "role": "admin"
+}
+
+### Bloquear/Desbloquear usuario (ADMIN)
+PATCH {{baseUrl}}/api/users/1/block
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "isBlocked": true
+}
+
+### Resetear contraseña de usuario (ADMIN)
+POST {{baseUrl}}/api/users/1/reset-password
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "newPassword": "nuevaPassword123"
+}
+
+### Eliminar usuario (ADMIN)
+DELETE {{baseUrl}}/api/users/1
+Authorization: Bearer {{adminToken}}
+
+
+################################################################################
+### SERVICE REQUESTS - SOLICITUDES DE SERVICIO TÉCNICO
+################################################################################
+
+### Obtener todas las solicitudes de servicio
+GET {{baseUrl}}/api/service-requests
+Authorization: Bearer {{token}}
+
+### Obtener solicitud por ID
+GET {{baseUrl}}/api/service-requests/1
+Authorization: Bearer {{token}}
+
+### Crear solicitud de servicio
+POST {{baseUrl}}/api/service-requests
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "type": "repair",
+  "description": "Mi PC no enciende, creo que es la fuente",
+  "deviceInfo": "PC Gamer - Intel i7, RTX 3070",
+  "preferredDate": "2024-12-15"
+}
+
+### Actualizar solicitud de servicio
+PUT {{baseUrl}}/api/service-requests/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "in_progress",
+  "estimatedCost": 15000,
+  "notes": "Se encontró problema en la fuente de poder"
+}
+
+### Completar solicitud (ADMIN)
+POST {{baseUrl}}/api/service-requests/1/complete
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "finalCost": 18000,
+  "completionNotes": "Se reemplazó la fuente de poder"
+}
+
+### Cancelar solicitud
+POST {{baseUrl}}/api/service-requests/1/cancel
+Authorization: Bearer {{token}}
+
+
+################################################################################
+### SITE SETTINGS - CONFIGURACIÓN DEL SITIO (ADMIN)
+################################################################################
+
+### Obtener configuración del sitio
+GET {{baseUrl}}/api/site-settings
+
+### Actualizar configuración (ADMIN)
+PUT {{baseUrl}}/api/site-settings
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "siteName": "PC Store Pro",
+  "siteDescription": "Tu tienda de componentes PC",
+  "maintenanceMode": false,
+  "enableRegistration": true
+}
+
+
+################################################################################
+### EJEMPLOS DE FLUJOS COMPLETOS
+################################################################################
+
+### FLUJO 1: Registro, Login y Compra
+# 1. Registrar usuario (ver arriba)
+# 2. Login (guardar token)
+# 3. Ver productos
+# 4. Agregar al carrito
+# 5. Ver carrito
+# 6. Crear orden (checkout)
+# 7. Ver mis órdenes
+
+### FLUJO 2: Admin - Gestión de Productos
+# 1. Login como admin
+# 2. Crear producto
+# 3. Actualizar stock
+# 4. Ver todos los usuarios
+# 5. Cambiar rol de usuario

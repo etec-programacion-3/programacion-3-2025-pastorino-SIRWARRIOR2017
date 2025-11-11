@@ -1,3 +1,5 @@
+const logger = require('../utils/logger');
+
 const { CartItem, Product } = require('../models');
 
 module.exports = {
@@ -32,7 +34,7 @@ module.exports = {
       // Limpiar automáticamente items de productos inactivos
       if (inactiveItemIds.length > 0) {
         await CartItem.destroy({ where: { id: inactiveItemIds } });
-        console.log(`Limpiados ${inactiveItemIds.length} items inactivos del carrito del usuario ${userId}`);
+        logger.debug(`Limpiados ${inactiveItemIds.length} items inactivos del carrito del usuario ${userId}`);
       }
 
       const tax = subtotal * 0.16; // 16% IVA
@@ -50,7 +52,7 @@ module.exports = {
         }
       });
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       res.status(500).json({ error: 'Cannot fetch cart', details: err.message });
     }
   },
@@ -80,7 +82,7 @@ module.exports = {
       const item = await CartItem.create({ userId, productId, quantity });
       res.status(201).json(item);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       res.status(500).json({ error: 'Cannot add to cart', details: err.message });
     }
   },
@@ -117,7 +119,7 @@ module.exports = {
 
       res.json(item);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       res.status(500).json({ error: 'Cannot update cart item', details: err.message });
     }
   },
@@ -132,7 +134,7 @@ module.exports = {
       await item.destroy();
       res.json({ success: true, message: 'Item removed from cart' });
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       res.status(500).json({ error: 'Cannot remove item', details: err.message });
     }
   },
@@ -144,7 +146,7 @@ module.exports = {
       await CartItem.destroy({ where: { userId } });
       res.json({ success: true, message: 'Cart cleared successfully' });
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       res.status(500).json({ error: 'Cannot clear cart', details: err.message });
     }
   }

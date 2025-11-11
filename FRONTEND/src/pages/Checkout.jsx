@@ -24,9 +24,10 @@ import { CheckCircle, ArrowLeft, ShoppingBag } from 'lucide-react';
 import toast from 'react-hot-toast';
 import CartContext from '../contexts/CartContext';
 import AuthContext from '../contexts/AuthContext';
+import { validateCardNumber, validateExpiryDate, validateCVV, detectCardType, formatCardNumber } from '../utils/cardValidation';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
 const steps = ['Revisar Orden', 'Información de Envío', 'Método de Pago', 'Confirmar'];
 
@@ -82,12 +83,14 @@ const Checkout = () => {
     }
 
     if (activeStep === 2) {
-      // Validar número de tarjeta (debe tener 16 dígitos)
+      // Validar número de tarjeta con algoritmo de Luhn
       const cardNumberClean = formData.cardNumber.replace(/\s/g, '');
       if (!cardNumberClean) {
         newErrors.cardNumber = 'El número de tarjeta es requerido';
-      } else if (!/^\d{16}$/.test(cardNumberClean)) {
-        newErrors.cardNumber = 'El número de tarjeta debe tener 16 dígitos';
+      } else if (!/^\d{13,19}$/.test(cardNumberClean)) {
+        newErrors.cardNumber = 'El número de tarjeta debe tener entre 13 y 19 dígitos';
+      } else if (!validateCardNumber(cardNumberClean)) {
+        newErrors.cardNumber = 'El número de tarjeta no es válido';
       }
 
       // Validar nombre en la tarjeta
@@ -114,11 +117,13 @@ const Checkout = () => {
         }
       }
 
-      // Validar CVV (3 o 4 dígitos)
+      // Validar CVV con detección de tipo de tarjeta
+      const cardType = detectCardType(cardNumberClean);
       if (!formData.cvv) {
         newErrors.cvv = 'El CVV es requerido';
-      } else if (!/^\d{3,4}$/.test(formData.cvv)) {
-        newErrors.cvv = 'CVV inválido (3 o 4 dígitos)';
+      } else if (!validateCVV(formData.cvv, cardType)) {
+        const expectedLength = cardType === 'amex' ? 4 : 3;
+        newErrors.cvv = `CVV inválido (debe tener ${expectedLength} dígitos)`;
       }
     }
 

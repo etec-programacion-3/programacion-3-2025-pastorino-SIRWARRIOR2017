@@ -1,3 +1,5 @@
+const logger = require('../utils/logger');
+
 const { Category, Product } = require('../models');
 
 module.exports = {
@@ -18,7 +20,7 @@ module.exports = {
 
       res.json(categoriesWithCount);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       res.status(500).json({ error: 'Cannot fetch categories', details: err.message });
     }
   },
@@ -36,7 +38,7 @@ module.exports = {
 
       res.json(category);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       res.status(500).json({ error: 'Cannot fetch category', details: err.message });
     }
   },
@@ -63,7 +65,7 @@ module.exports = {
 
       res.status(201).json(category);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       res.status(500).json({ error: 'Cannot create category', details: err.message });
     }
   },
@@ -94,7 +96,7 @@ module.exports = {
 
       res.json(category);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       res.status(500).json({ error: 'Cannot update category', details: err.message });
     }
   },
@@ -119,7 +121,7 @@ module.exports = {
 
       res.json({ success: true, message: 'Category deleted successfully' });
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       res.status(500).json({ error: 'Cannot delete category', details: err.message });
     }
   }
