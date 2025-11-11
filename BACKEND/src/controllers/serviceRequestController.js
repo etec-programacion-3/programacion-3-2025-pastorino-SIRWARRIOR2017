@@ -1,6 +1,5 @@
-const { ServiceRequest, User, TimeSlot } = require('../models');
+const { ServiceRequest, User } = require('../models');
 const { sequelize } = require('../config/database');
-const timeSlotController = require('./timeSlotController');
 
 // GET - Obtener todas las solicitudes
 const getAllServiceRequests = async (req, res) => {
@@ -16,8 +15,7 @@ const getAllServiceRequests = async (req, res) => {
     const requests = await ServiceRequest.findAll({
       where,
       include: [
-        { model: User, attributes: ['id', 'name', 'email', 'phone'] },
-        { model: TimeSlot, attributes: ['id', 'date', 'startTime', 'endTime'] }
+        { model: User, attributes: ['id', 'name', 'email', 'phone'] }
       ],
       order: [[sortBy, order]]
     });
@@ -35,8 +33,7 @@ const getServiceRequestById = async (req, res) => {
     const { id } = req.params;
     const request = await ServiceRequest.findByPk(id, {
       include: [
-        { model: User, attributes: ['id', 'name', 'email', 'phone', 'address'] },
-        { model: TimeSlot, attributes: ['id', 'date', 'startTime', 'endTime'] }
+        { model: User, attributes: ['id', 'name', 'email', 'phone', 'address'] }
       ]
     });
 
@@ -55,26 +52,19 @@ const getServiceRequestById = async (req, res) => {
   }
 };
 
-// POST - Crear nueva solicitud
+// POST - Crear nueva solicitud (ADMIN ONLY - para crear manualmente después de recibir contacto)
 const createServiceRequest = async (req, res) => {
-  const t = await sequelize.transaction();
-
   try {
-    const userId = req.user.id;
-    const { serviceType, priority, description, deviceInfo, timeSlotId } = req.body;
-
-    if (!serviceType || !description) {
-      await t.rollback();
-      return res.status(400).json({ error: 'serviceType and description are required' });
+    // Solo admins pueden crear solicitudes manualmente
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin privileges required. Users must contact support directly.' });
     }
 
-    if (!timeSlotId) {
-      await t.rollback();
-      return res.status(400).json({ error: 'Debes seleccionar un turno disponible' });
-    }
+    const { userId, serviceType, priority, description, deviceInfo, scheduledDate, estimatedCost, notes } = req.body;
 
-    // Reservar el turno
-    const timeSlot = await timeSlotController.bookTimeSlot(timeSlotId, t);
+    if (!userId || !serviceType || !description) {
+      return res.status(400).json({ error: 'userId, serviceType and description are required' });
+    }
 
     const request = await ServiceRequest.create({
       requestNumber: ServiceRequest.generateRequestNumber(),
@@ -84,22 +74,19 @@ const createServiceRequest = async (req, res) => {
       status: 'pending',
       description,
       deviceInfo: deviceInfo || {},
-      timeSlotId,
-      scheduledDate: new Date(`${timeSlot.date}T${timeSlot.startTime}`)
-    }, { transaction: t });
-
-    await t.commit();
+      scheduledDate: scheduledDate || null,
+      estimatedCost: estimatedCost || null,
+      notes: notes || null
+    });
 
     const createdRequest = await ServiceRequest.findByPk(request.id, {
       include: [
-        { model: User, attributes: ['id', 'name', 'email', 'phone'] },
-        { model: TimeSlot, attributes: ['id', 'date', 'startTime', 'endTime'] }
+        { model: User, attributes: ['id', 'name', 'email', 'phone'] }
       ]
     });
 
     res.status(201).json(createdRequest);
   } catch (err) {
-    await t.rollback();
     console.error(err);
     res.status(500).json({ error: 'Cannot create service request', details: err.message });
   }
@@ -109,7 +96,7 @@ const createServiceRequest = async (req, res) => {
 const updateServiceRequest = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, priority, estimatedCost, scheduledDate, notes } = req.body;
+    const { status, priority, estimatedCost, actualCost, scheduledDate, notes, technicianNotes } = req.body;
 
     const request = await ServiceRequest.findByPk(id);
     if (!request) {
@@ -122,13 +109,20 @@ const updateServiceRequest = async (req, res) => {
 
     const isAdmin = req.user.role === 'admin';
 
-    await request.update({
-      status: (isAdmin && status) ? status : request.status,
-      priority: (isAdmin && priority) ? priority : request.priority,
-      estimatedCost: (isAdmin && estimatedCost) ? estimatedCost : request.estimatedCost,
-      scheduledDate: (isAdmin && scheduledDate) ? scheduledDate : request.scheduledDate,
-      notes: notes || request.notes
-    });
+    // Solo admin puede modificar estos campos
+    if (isAdmin) {
+      if (status) request.status = status;
+      if (priority) request.priority = priority;
+      if (estimatedCost !== undefined) request.estimatedCost = estimatedCost;
+      if (actualCost !== undefined) request.actualCost = actualCost;
+      if (scheduledDate) request.scheduledDate = scheduledDate;
+      if (technicianNotes !== undefined) request.technicianNotes = technicianNotes;
+    }
+
+    // Cualquiera puede agregar notas
+    if (notes !== undefined) request.notes = notes;
+
+    await request.save();
 
     res.json(request);
   } catch (err) {
@@ -162,35 +156,23 @@ const completeServiceRequest = async (req, res) => {
 
 // POST - Cancelar solicitud
 const cancelServiceRequest = async (req, res) => {
-  const t = await sequelize.transaction();
-
   try {
     const { id } = req.params;
-    const request = await ServiceRequest.findByPk(id, { transaction: t });
+    const request = await ServiceRequest.findByPk(id);
 
     if (!request) {
-      await t.rollback();
       return res.status(404).json({ error: 'Service request not found' });
     }
 
     if (request.userId !== req.user.id && req.user.role !== 'admin') {
-      await t.rollback();
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
-    // Liberar el turno si tenía uno reservado
-    if (request.timeSlotId) {
-      await timeSlotController.releaseTimeSlot(request.timeSlotId, t);
-    }
-
     request.status = 'cancelled';
-    await request.save({ transaction: t });
-
-    await t.commit();
+    await request.save();
 
     res.json(request);
   } catch (err) {
-    await t.rollback();
     console.error(err);
     res.status(500).json({ error: 'Cannot cancel service request', details: err.message });
   }

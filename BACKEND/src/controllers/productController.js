@@ -179,21 +179,47 @@ module.exports = {
     }
   },
 
-  // DELETE - Eliminar producto (soft delete) (ADMIN)
+  // DELETE - Eliminar producto físicamente (ADMIN)
   deleteProduct: async (req, res) => {
     try {
       const { id } = req.params;
+      const { OrderItem, CartItem } = require('../models');
+
       const product = await Product.findByPk(id);
 
       if (!product) {
         return res.status(404).json({ error: 'Product not found' });
       }
 
-      // Soft delete
-      product.isActive = false;
-      await product.save();
+      // Verificar si hay OrderItems que referencien este producto
+      const orderItemCount = await OrderItem.count({ where: { productId: id } });
 
-      res.json({ success: true, message: 'Product deleted successfully' });
+      if (orderItemCount > 0) {
+        // Si tiene órdenes asociadas, hacer soft delete en lugar de eliminación física
+        product.isActive = false;
+        await product.save();
+
+        return res.json({
+          success: true,
+          message: 'Product deactivated (has order history)',
+          softDelete: true
+        });
+      }
+
+      // Eliminar items del carrito si existen (antes de eliminar el producto)
+      const cartItemCount = await CartItem.count({ where: { productId: id } });
+      if (cartItemCount > 0) {
+        await CartItem.destroy({ where: { productId: id } });
+      }
+
+      // Eliminación física del producto
+      await product.destroy();
+
+      res.json({
+        success: true,
+        message: 'Product permanently deleted',
+        hardDelete: true
+      });
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: 'Cannot delete product', details: err.message });

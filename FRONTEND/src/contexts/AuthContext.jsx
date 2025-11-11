@@ -102,18 +102,38 @@ export const AuthProvider = ({ children }) => {
     }
   }, [state.token, state.user, state.lastActivity]);
 
-  // Auto logout después de 30 minutos de inactividad
+  // Auto logout después de 30 minutos de inactividad con warning
   useEffect(() => {
+    let warningShown = false;
+
     const checkInactivity = () => {
       const lastActivity = state.lastActivity;
-      if (lastActivity && Date.now() - lastActivity > 30 * 60 * 1000) {
+      if (!lastActivity || !state.isAuthenticated) return;
+
+      const inactiveTime = Date.now() - lastActivity;
+      const WARNING_TIME = 28 * 60 * 1000; // 28 minutos
+      const LOGOUT_TIME = 30 * 60 * 1000; // 30 minutos
+
+      // Mostrar advertencia 2 minutos antes del logout
+      if (inactiveTime > WARNING_TIME && inactiveTime < LOGOUT_TIME && !warningShown) {
+        warningShown = true;
+        toast('Tu sesión expirará en 2 minutos por inactividad', {
+          icon: '⏰',
+          duration: 120000, // 2 minutos
+          position: 'top-center'
+        });
+      }
+
+      // Realizar logout
+      if (inactiveTime > LOGOUT_TIME) {
         logout();
+        toast.error('Sesión cerrada por inactividad');
       }
     };
 
     const interval = setInterval(checkInactivity, 60 * 1000); // Revisar cada minuto
     return () => clearInterval(interval);
-  }, [state.lastActivity]);
+  }, [state.lastActivity, state.isAuthenticated]);
 
   // Actualizar última actividad en interacción del usuario
   useEffect(() => {
@@ -163,11 +183,15 @@ export const AuthProvider = ({ children }) => {
       // Si viene de OAuth, ya tenemos el token y usuario
       if (credentials.skipApi) {
         dispatch({ type: 'AUTH_SUCCESS', payload: { user: credentials.user, token: credentials.token } });
+        // Disparar evento para sincronizar carrito
+        window.dispatchEvent(new CustomEvent('user-login'));
         return { user: credentials.user, token: credentials.token };
       }
 
       const data = await api.login(credentials);
       dispatch({ type: 'AUTH_SUCCESS', payload: data });
+      // Disparar evento para sincronizar carrito
+      window.dispatchEvent(new CustomEvent('user-login'));
       return data;
     } catch (error) {
       dispatch({ type: 'AUTH_FAILURE', payload: error.message });
@@ -181,6 +205,8 @@ export const AuthProvider = ({ children }) => {
       const data = await api.register(credentials);
       if (data?.token) {
         dispatch({ type: 'AUTH_SUCCESS', payload: data });
+        // Disparar evento para sincronizar carrito
+        window.dispatchEvent(new CustomEvent('user-login'));
       }
       return data;
     } catch (error) {
@@ -189,8 +215,23 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    // Limpiar el carrito del backend si hay sesión activa
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        await api.clearCart();
+      }
+    } catch (error) {
+      console.error('Error clearing backend cart on logout:', error);
+    }
+
+    // Limpiar el carrito del localStorage al cerrar sesión
+    localStorage.removeItem('cart');
     dispatch({ type: 'LOGOUT' });
+
+    // Disparar evento personalizado para que CartContext limpie el carrito
+    window.dispatchEvent(new CustomEvent('user-logout'));
   }, []);
 
   const updateUser = useCallback((userData) => {

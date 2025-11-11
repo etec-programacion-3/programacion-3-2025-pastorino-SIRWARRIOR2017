@@ -24,10 +24,12 @@ import {
 } from 'lucide-react';
 import CartContext from '../contexts/CartContext';
 import AuthContext from '../contexts/AuthContext';
+import SiteConfigContext from '../contexts/SiteConfigContext';
 
 const Header = () => {
   const { getTotalItems } = useContext(CartContext);
   const { isAuthenticated, logout, user } = useContext(AuthContext);
+  const { config } = useContext(SiteConfigContext);
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
   const [scrolled, setScrolled] = useState(false);
@@ -84,7 +86,7 @@ const Header = () => {
       }}
     >
       <Container maxWidth="xl">
-        <Toolbar disableGutters sx={{ minHeight: { xs: 64, md: 70 } }}>
+        <Toolbar disableGutters sx={{ minHeight: { xs: 70, md: 80 }, py: 1 }}>
           {/* Logo */}
           <Box
             component={Link}
@@ -98,37 +100,55 @@ const Header = () => {
               mr: { md: 6 },
             }}
           >
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: 2,
-                background: scrolled
-                  ? 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)'
-                  : 'rgba(255,255,255,0.2)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 800,
-                fontSize: '1.2rem',
-                color: scrolled ? 'white' : 'white',
-                transition: 'all 0.3s ease',
-              }}
-            >
-              PC
-            </Box>
-            <Typography
-              variant="h6"
-              sx={{
-                fontWeight: 800,
-                fontSize: '1.4rem',
-                color: scrolled ? 'primary.main' : 'white',
-                letterSpacing: '-0.02em',
-                transition: 'color 0.3s ease',
-              }}
-            >
-              PC Store
-            </Typography>
+            {config.logo ? (
+              <Box
+                component="img"
+                src={`http://localhost:3000${config.logo}`}
+                alt={config.siteName}
+                sx={{
+                  height: scrolled ? 70 : 110,
+                  maxWidth: scrolled ? 260 : 350,
+                  width: 'auto',
+                  objectFit: 'contain',
+                  transition: 'all 0.3s ease',
+                  filter: scrolled ? 'none' : 'drop-shadow(0 3px 10px rgba(0,0,0,0.2))',
+                }}
+              />
+            ) : (
+              <>
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 2,
+                    background: scrolled
+                      ? 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)'
+                      : 'rgba(255,255,255,0.2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 800,
+                    fontSize: '1.2rem',
+                    color: scrolled ? 'white' : 'white',
+                    transition: 'all 0.3s ease',
+                  }}
+                >
+                  {config.siteName?.substring(0, 2).toUpperCase() || 'PC'}
+                </Box>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 800,
+                    fontSize: '1.4rem',
+                    color: scrolled ? 'primary.main' : 'white',
+                    letterSpacing: '-0.02em',
+                    transition: 'color 0.3s ease',
+                  }}
+                >
+                  {config.siteName || 'PC Store'}
+                </Typography>
+              </>
+            )}
           </Box>
 
           {/* Navigation */}
@@ -166,6 +186,20 @@ const Header = () => {
               }}
             >
               Productos
+            </Button>
+            <Button
+              component={Link}
+              to="/pc-builder"
+              sx={{
+                color: scrolled ? 'text.primary' : 'white',
+                fontWeight: 600,
+                px: 2,
+                '&:hover': {
+                  backgroundColor: scrolled ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.1)',
+                },
+              }}
+            >
+              Armar PC
             </Button>
             <Button
               component={Link}

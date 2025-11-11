@@ -192,6 +192,7 @@ const Checkout = () => {
       setLoading(true);
       const token = localStorage.getItem('token');
 
+      // Crear la orden desde el carrito del backend (ya sincronizado)
       const response = await axios.post(
         `${API_BASE_URL}/orders`,
         { address: formData.address },
@@ -276,7 +277,7 @@ const Checkout = () => {
                     sx={{ ml: 2 }}
                   />
                   <Typography variant="body1" fontWeight="bold">
-                    ${(item.price * item.quantity).toFixed(2)}
+                    ${(parseFloat(item.price || 0) * item.quantity).toFixed(2)}
                   </Typography>
                 </ListItem>
               ))}

@@ -10,6 +10,7 @@ import Register from './pages/Register';
 import TechnicalService from './pages/TechnicalService';
 import Checkout from './pages/Checkout';
 import OAuthCallback from './pages/OAuthCallback';
+import PCBuilder from './pages/PCBuilder';
 
 // User Pages
 import Profile from './pages/user/Profile';
@@ -35,6 +36,7 @@ function App() {
           <Route path="products" element={<Products />} />
           <Route path="products/:id" element={<ProductDetail />} />
           <Route path="cart" element={<Cart />} />
+          <Route path="pc-builder" element={<PCBuilder />} />
           <Route path="checkout" element={
             <ProtectedRoute>
               <Checkout />

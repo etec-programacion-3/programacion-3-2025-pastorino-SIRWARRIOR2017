@@ -74,14 +74,6 @@ const ServiceRequest = sequelize.define('ServiceRequest', {
       model: 'Users',
       key: 'id'
     }
-  },
-  timeSlotId: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    references: {
-      model: 'time_slots',
-      key: 'id'
-    }
   }
 });
 

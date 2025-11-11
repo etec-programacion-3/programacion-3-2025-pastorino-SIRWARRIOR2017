@@ -497,7 +497,7 @@ const Home = () => {
                         variant="h5"
                         sx={{ color: 'primary.main', fontWeight: 800 }}
                       >
-                        ${product.price?.toFixed(2)}
+                        ${parseFloat(product.price || 0).toFixed(2)}
                       </Typography>
                       {product.originalPrice && (
                         <Typography
@@ -507,7 +507,7 @@ const Home = () => {
                             color: 'text.secondary',
                           }}
                         >
-                          ${product.originalPrice?.toFixed(2)}
+                          ${parseFloat(product.originalPrice).toFixed(2)}
                         </Typography>
                       )}
                     </Box>

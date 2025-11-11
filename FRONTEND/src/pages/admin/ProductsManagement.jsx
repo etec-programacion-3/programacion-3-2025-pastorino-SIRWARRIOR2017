@@ -23,7 +23,12 @@ import {
   InputLabel,
   Alert,
   Chip,
-  Grid
+  Grid,
+  Divider,
+  Card,
+  CardContent,
+  Tabs,
+  Tab
 } from '@mui/material';
 import { Edit, Trash2, Plus, Save, X } from 'lucide-react';
 import axios from 'axios';
@@ -45,10 +50,17 @@ const ProductsManagement = () => {
     categoryId: '',
     brand: '',
     model: '',
-    images: []
+    images: [],
+    specifications: {
+      sections: [] // Array de objetos: [{ title: "Memoria", specs: [{label, value}] }]
+    }
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [currentTab, setCurrentTab] = useState(0);
+  const [newSpec, setNewSpec] = useState({ label: '', value: '' });
+  const [newSectionTitle, setNewSectionTitle] = useState('');
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, productId: null, productName: '' });
 
   useEffect(() => {
     fetchProducts();
@@ -85,6 +97,47 @@ const ProductsManagement = () => {
     }
   };
 
+  // Función helper para normalizar specifications
+  const normalizeSpecifications = (specs) => {
+    const defaultSpecs = {
+      sections: []
+    };
+
+    if (!specs || typeof specs !== 'object') {
+      return defaultSpecs;
+    }
+
+    // Si viene en el formato antiguo (con general, main, etc), convertir al nuevo formato
+    if (specs.general || specs.main || specs.memory || specs.connectivity || specs.other) {
+      const sections = [];
+
+      if (specs.general?.length > 0) {
+        sections.push({ title: 'Características del producto', specs: specs.general });
+      }
+      if (specs.main?.length > 0) {
+        sections.push({ title: 'Características principales', specs: specs.main });
+      }
+      if (specs.memory?.length > 0) {
+        sections.push({ title: 'Memoria', specs: specs.memory });
+      }
+      if (specs.connectivity?.length > 0) {
+        sections.push({ title: 'Conectividad', specs: specs.connectivity });
+      }
+      if (specs.other?.length > 0) {
+        sections.push({ title: 'Otras características', specs: specs.other });
+      }
+
+      return { sections };
+    }
+
+    // Si ya viene con el formato nuevo
+    if (Array.isArray(specs.sections)) {
+      return { sections: specs.sections };
+    }
+
+    return defaultSpecs;
+  };
+
   const handleOpenDialog = (product = null) => {
     if (product) {
       setEditingProduct(product);
@@ -96,7 +149,8 @@ const ProductsManagement = () => {
         categoryId: product.categoryId,
         brand: product.brand || '',
         model: product.model || '',
-        images: product.images || []
+        images: product.images || [],
+        specifications: normalizeSpecifications(product.specifications)
       });
       // Mostrar preview de imagen existente
       if (product.images && product.images.length > 0) {
@@ -114,11 +168,15 @@ const ProductsManagement = () => {
         categoryId: '',
         brand: '',
         model: '',
-        images: []
+        images: [],
+        specifications: {
+          sections: []
+        }
       });
       setImagePreview(null);
     }
     setImageFile(null);
+    setCurrentTab(0);
     setOpenDialog(true);
   };
 
@@ -142,6 +200,96 @@ const ProductsManagement = () => {
     }
   };
 
+  // Funciones para manejar secciones y especificaciones
+  const handleAddSection = () => {
+    if (!newSectionTitle.trim()) {
+      toast.error('Por favor ingresa un nombre para la sección');
+      return;
+    }
+
+    const newSection = {
+      title: newSectionTitle.trim(),
+      specs: []
+    };
+
+    setFormData({
+      ...formData,
+      specifications: {
+        sections: [...formData.specifications.sections, newSection]
+      }
+    });
+
+    setNewSectionTitle('');
+    toast.success('Sección agregada');
+  };
+
+  const handleRemoveSection = (sectionIndex) => {
+    const updatedSections = formData.specifications.sections.filter((_, i) => i !== sectionIndex);
+    setFormData({
+      ...formData,
+      specifications: {
+        sections: updatedSections
+      }
+    });
+    toast.success('Sección eliminada');
+  };
+
+  const handleUpdateSectionTitle = (sectionIndex, newTitle) => {
+    const updatedSections = [...formData.specifications.sections];
+    updatedSections[sectionIndex].title = newTitle;
+    setFormData({
+      ...formData,
+      specifications: {
+        sections: updatedSections
+      }
+    });
+  };
+
+  const handleAddSpec = (sectionIndex) => {
+    if (!newSpec.label || !newSpec.value) {
+      toast.error('Por favor completa ambos campos');
+      return;
+    }
+
+    const updatedSections = [...formData.specifications.sections];
+    updatedSections[sectionIndex].specs.push({ ...newSpec });
+
+    setFormData({
+      ...formData,
+      specifications: {
+        sections: updatedSections
+      }
+    });
+
+    setNewSpec({ label: '', value: '' });
+    toast.success('Característica agregada');
+  };
+
+  const handleRemoveSpec = (sectionIndex, specIndex) => {
+    const updatedSections = [...formData.specifications.sections];
+    updatedSections[sectionIndex].specs = updatedSections[sectionIndex].specs.filter((_, i) => i !== specIndex);
+
+    setFormData({
+      ...formData,
+      specifications: {
+        sections: updatedSections
+      }
+    });
+    toast.success('Característica eliminada');
+  };
+
+  const handleUpdateSpec = (sectionIndex, specIndex, field, value) => {
+    const updatedSections = [...formData.specifications.sections];
+    updatedSections[sectionIndex].specs[specIndex][field] = value;
+
+    setFormData({
+      ...formData,
+      specifications: {
+        sections: updatedSections
+      }
+    });
+  };
+
   const handleSubmit = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -160,6 +308,7 @@ const ProductsManagement = () => {
       formDataToSend.append('categoryId', formData.categoryId);
       formDataToSend.append('brand', formData.brand);
       formDataToSend.append('model', formData.model);
+      formDataToSend.append('specifications', JSON.stringify(formData.specifications));
 
       // Agregar imagen si se seleccionó una nueva
       if (imageFile) {
@@ -199,31 +348,53 @@ const ProductsManagement = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('¿Estás seguro de eliminar este producto?')) return;
+  const handleOpenDeleteDialog = (product) => {
+    setDeleteDialog({
+      open: true,
+      productId: product.id,
+      productName: product.name
+    });
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setDeleteDialog({ open: false, productId: null, productName: '' });
+  };
+
+  const handleConfirmDelete = async () => {
+    const { productId } = deleteDialog;
 
     try {
       const token = localStorage.getItem('token');
 
       if (!token) {
         toast.error('No hay sesión activa. Por favor, inicia sesión nuevamente.');
+        handleCloseDeleteDialog();
         return;
       }
 
-      console.log('Eliminando producto ID:', id);
-
-      await axios.delete(`${API_BASE_URL}/products/${id}`, {
+      const response = await axios.delete(`${API_BASE_URL}/products/${productId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      console.log('Producto eliminado exitosamente');
-      toast.success('Producto eliminado exitosamente');
+      // Verificar si fue soft delete o hard delete
+      if (response.data.softDelete) {
+        toast.success('Producto desactivado (tiene historial de órdenes)', {
+          duration: 4000,
+          icon: '⚠️'
+        });
+      } else if (response.data.hardDelete) {
+        toast.success('Producto eliminado permanentemente');
+      } else {
+        toast.success(response.data.message || 'Producto eliminado exitosamente');
+      }
+
+      handleCloseDeleteDialog();
       fetchProducts();
     } catch (err) {
       console.error('Error al eliminar:', err);
-      console.error('Respuesta del servidor:', err.response);
       const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'Error al eliminar producto';
       toast.error(errorMessage);
+      handleCloseDeleteDialog();
     }
   };
 
@@ -335,7 +506,7 @@ const ProductsManagement = () => {
                   </IconButton>
                   <IconButton
                     color="error"
-                    onClick={() => handleDelete(product.id)}
+                    onClick={() => handleOpenDeleteDialog(product)}
                     size="small"
                   >
                     <Trash2 size={18} />
@@ -347,12 +518,18 @@ const ProductsManagement = () => {
         </Table>
       </TableContainer>
 
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="lg" fullWidth>
         <DialogTitle>
           {editingProduct ? 'Editar Producto' : 'Nuevo Producto'}
         </DialogTitle>
         <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
+          <Tabs value={currentTab} onChange={(e, newValue) => setCurrentTab(newValue)} sx={{ mb: 2 }}>
+            <Tab label="Información Básica" />
+            <Tab label="Características" />
+          </Tabs>
+
+          {currentTab === 0 && (
+            <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid item xs={12}>
               <TextField
                 fullWidth
@@ -469,6 +646,156 @@ const ProductsManagement = () => {
               </Box>
             </Grid>
           </Grid>
+          )}
+
+          {currentTab === 1 && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Características del Producto
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Crea tus propias secciones y agrégales características
+              </Typography>
+
+              {/* Agregar nueva sección */}
+              <Card elevation={1} sx={{ mb: 3, backgroundColor: '#f9f9f9' }}>
+                <CardContent>
+                  <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                    Crear Nueva Sección
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Nombre de la sección (ej: Memoria, Conectividad, etc.)"
+                      value={newSectionTitle}
+                      onChange={(e) => setNewSectionTitle(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleAddSection();
+                        }
+                      }}
+                      placeholder="Ej: Memoria, Características principales, Conectividad"
+                    />
+                    <Button
+                      variant="contained"
+                      onClick={handleAddSection}
+                      startIcon={<Plus size={18} />}
+                      sx={{ minWidth: 150 }}
+                    >
+                      Agregar Sección
+                    </Button>
+                  </Box>
+                </CardContent>
+              </Card>
+
+              {/* Mostrar mensaje si no hay secciones */}
+              {formData.specifications.sections.length === 0 && (
+                <Alert severity="info" sx={{ mb: 3 }}>
+                  Comienza agregando una sección para organizar las características de tu producto
+                </Alert>
+              )}
+
+              {/* Listar todas las secciones */}
+              <Grid container spacing={3}>
+                {formData.specifications.sections.map((section, sectionIndex) => (
+                  <Grid item xs={12} key={sectionIndex}>
+                    <Card elevation={2}>
+                      <CardContent>
+                        {/* Header de la sección con título editable y botón eliminar */}
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                          <TextField
+                            variant="standard"
+                            value={section.title}
+                            onChange={(e) => handleUpdateSectionTitle(sectionIndex, e.target.value)}
+                            sx={{
+                              flex: 1,
+                              '& .MuiInput-root': {
+                                fontSize: '1.1rem',
+                                fontWeight: 'bold'
+                              }
+                            }}
+                          />
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => handleRemoveSection(sectionIndex)}
+                            sx={{ ml: 2 }}
+                          >
+                            <Trash2 size={18} />
+                          </IconButton>
+                        </Box>
+
+                        <Divider sx={{ mb: 2 }} />
+
+                        {/* Lista de características de esta sección */}
+                        <Grid container spacing={2}>
+                          {section.specs.map((spec, specIndex) => (
+                            <Grid item xs={12} md={6} key={specIndex}>
+                              <Box sx={{ display: 'flex', gap: 1 }}>
+                                <TextField
+                                  size="small"
+                                  label="Característica"
+                                  value={spec.label}
+                                  onChange={(e) => handleUpdateSpec(sectionIndex, specIndex, 'label', e.target.value)}
+                                  sx={{ flex: 1 }}
+                                />
+                                <TextField
+                                  size="small"
+                                  label="Valor"
+                                  value={spec.value}
+                                  onChange={(e) => handleUpdateSpec(sectionIndex, specIndex, 'value', e.target.value)}
+                                  sx={{ flex: 1 }}
+                                />
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  onClick={() => handleRemoveSpec(sectionIndex, specIndex)}
+                                >
+                                  <Trash2 size={16} />
+                                </IconButton>
+                              </Box>
+                            </Grid>
+                          ))}
+                        </Grid>
+
+                        {/* Agregar nueva característica a esta sección */}
+                        <Box sx={{ display: 'flex', gap: 1, mt: 3 }}>
+                          <TextField
+                            size="small"
+                            label="Nueva característica"
+                            value={newSpec.label}
+                            onChange={(e) => setNewSpec({ ...newSpec, label: e.target.value })}
+                            sx={{ flex: 1 }}
+                          />
+                          <TextField
+                            size="small"
+                            label="Valor"
+                            value={newSpec.value}
+                            onChange={(e) => setNewSpec({ ...newSpec, value: e.target.value })}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                handleAddSpec(sectionIndex);
+                              }
+                            }}
+                            sx={{ flex: 1 }}
+                          />
+                          <Button
+                            size="small"
+                            variant="contained"
+                            onClick={() => handleAddSpec(sectionIndex)}
+                            startIcon={<Plus size={16} />}
+                          >
+                            Agregar
+                          </Button>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog} startIcon={<X />}>
@@ -480,6 +807,41 @@ const ProductsManagement = () => {
             startIcon={<Save />}
           >
             Guardar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Diálogo de confirmación de eliminación */}
+      <Dialog
+        open={deleteDialog.open}
+        onClose={handleCloseDeleteDialog}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Confirmar Eliminación</DialogTitle>
+        <DialogContent>
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            Esta acción no se puede deshacer
+          </Alert>
+          <Typography>
+            ¿Estás seguro de que deseas eliminar el producto{' '}
+            <strong>{deleteDialog.productName}</strong>?
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+            Si este producto tiene órdenes asociadas, será desactivado en lugar de eliminado permanentemente.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteDialog} color="inherit">
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleConfirmDelete}
+            variant="contained"
+            color="error"
+            startIcon={<Trash2 size={18} />}
+          >
+            Eliminar
           </Button>
         </DialogActions>
       </Dialog>

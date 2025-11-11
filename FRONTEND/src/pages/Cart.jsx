@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -20,37 +20,46 @@ import {
   Divider,
   Grid,
   Chip,
+  LinearProgress,
 } from '@mui/material';
-import { Plus, Minus, Trash2, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { Plus, Minus, Trash2, ShoppingBag, ArrowLeft, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import CartContext from '../contexts/CartContext';
 import AuthContext from '../contexts/AuthContext';
-import * as api from '../services/api';
 
 const Cart = () => {
   const navigate = useNavigate();
   const { items, removeItem, updateQuantity, getTotalPrice, clearCart } = useContext(CartContext);
-  const { isAuthenticated, user } = useContext(AuthContext);
+  const { isAuthenticated } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(null);
 
   const subtotal = getTotalPrice();
   const tax = subtotal * 0.16; // 16% IVA
   const shipping = subtotal > 1000 ? 0 : 50;
   const total = subtotal + tax + shipping;
 
-  const handleQuantityChange = async (id, newQuantity) => {
+  const handleQuantityChange = async (id, newQuantity, item) => {
     if (newQuantity < 1) {
-      removeItem(id);
-      toast.success('Producto eliminado del carrito');
-    } else {
-      try {
-        await updateQuantity(id, newQuantity);
-      } catch (err) {
-        console.error('Error updating quantity:', err);
-        toast.error(err.message || 'Error al actualizar cantidad');
+      if (window.confirm(`¿Eliminar ${item.name} del carrito?`)) {
+        removeItem(id);
+        toast.success('Producto eliminado del carrito');
       }
+      return;
+    }
+
+    // Validar que no exceda el stock
+    if (newQuantity > item.stock) {
+      toast.error(`Solo hay ${item.stock} unidades disponibles de ${item.name}`);
+      return;
+    }
+
+    try {
+      await updateQuantity(id, newQuantity);
+      toast.success('Cantidad actualizada');
+    } catch (err) {
+      console.error('Error updating quantity:', err);
+      const errorMsg = err.response?.data?.error || err.message || 'Error al actualizar cantidad';
+      toast.error(errorMsg);
     }
   };
 
@@ -71,11 +80,35 @@ const Cart = () => {
       return;
     }
 
+    // Validar stock antes de proceder
+    const outOfStock = items.filter(item => item.quantity > item.stock);
+    if (outOfStock.length > 0) {
+      toast.error('Algunos productos exceden el stock disponible. Por favor ajusta las cantidades.');
+      return;
+    }
+
+    setLoading(true);
     // Redirigir a la página de checkout
     navigate('/checkout');
   };
 
-  if (items.length === 0 && !successMessage) {
+  const handleClearCart = () => {
+    console.log('handleClearCart llamado');
+    if (window.confirm('¿Estás seguro de que deseas vaciar todo el carrito?')) {
+      console.log('Usuario confirmó vaciar carrito');
+      try {
+        clearCart();
+        toast.success('Carrito vaciado exitosamente');
+      } catch (error) {
+        console.error('Error al vaciar carrito:', error);
+        toast.error('Error al vaciar el carrito');
+      }
+    } else {
+      console.log('Usuario canceló vaciar carrito');
+    }
+  };
+
+  if (items.length === 0) {
     return (
       <Container maxWidth="lg" sx={{ py: 8, textAlign: 'center' }}>
         <ShoppingBag size={64} style={{ color: '#ccc', marginBottom: 20 }} />
@@ -112,9 +145,6 @@ const Cart = () => {
           🛒 Carrito de Compras
         </Typography>
       </Box>
-
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-      {successMessage && <Alert severity="success" sx={{ mb: 2 }}>{successMessage}</Alert>}
 
       <Grid container spacing={3}>
         {/* Items del carrito */}
@@ -170,16 +200,31 @@ const Cart = () => {
                               {item.name}
                             </Typography>
                             {item.brand && (
-                              <Typography variant="caption" color="text.secondary">
+                              <Typography variant="caption" color="text.secondary" display="block">
                                 {item.brand}
                               </Typography>
                             )}
+                            {/* Indicador de stock */}
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: item.stock < 5 ? 'error.main' : item.stock < 10 ? 'warning.main' : 'success.main',
+                                fontWeight: 500,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 0.5,
+                                mt: 0.5
+                              }}
+                            >
+                              {item.stock < 5 && <AlertTriangle size={12} />}
+                              {item.stock === 0 ? 'Sin stock' : `${item.stock} disponibles`}
+                            </Typography>
                           </Box>
                         </Box>
                       </TableCell>
                       <TableCell align="right">
                         <Typography sx={{ color: '#667eea', fontWeight: 'bold' }}>
-                          ${item.price?.toFixed(2)}
+                          ${parseFloat(item.price || 0).toFixed(2)}
                         </Typography>
                       </TableCell>
                       <TableCell align="center">
@@ -194,25 +239,31 @@ const Cart = () => {
                           <IconButton
                             size="small"
                             onClick={() =>
-                              handleQuantityChange(item.id, item.quantity - 1)
+                              handleQuantityChange(item.id, item.quantity - 1, item)
                             }
+                            sx={{
+                              bgcolor: 'grey.100',
+                              '&:hover': { bgcolor: 'grey.200' }
+                            }}
                           >
                             <Minus size={16} />
                           </IconButton>
                           <TextField
                             type="number"
                             value={item.quantity}
-                            onChange={(e) =>
-                              handleQuantityChange(item.id, parseInt(e.target.value))
-                            }
+                            onChange={(e) => {
+                              const value = parseInt(e.target.value) || 1;
+                              handleQuantityChange(item.id, value, item);
+                            }}
                             inputProps={{ min: 1, max: item.stock }}
                             sx={{
-                              width: 60,
+                              width: 70,
                               '& .MuiOutlinedInput-root': {
                                 padding: 0,
                               },
                               '& input': {
                                 textAlign: 'center',
+                                fontWeight: 600,
                               },
                             }}
                             size="small"
@@ -220,17 +271,38 @@ const Cart = () => {
                           <IconButton
                             size="small"
                             onClick={() =>
-                              handleQuantityChange(item.id, item.quantity + 1)
+                              handleQuantityChange(item.id, item.quantity + 1, item)
                             }
-                            disabled={item.quantity >= item.stock}
+                            disabled={item.quantity >= item.stock || item.stock === 0}
+                            sx={{
+                              bgcolor: item.quantity >= item.stock ? 'grey.100' : 'primary.main',
+                              color: item.quantity >= item.stock ? 'grey.400' : 'white',
+                              '&:hover': {
+                                bgcolor: item.quantity >= item.stock ? 'grey.100' : 'primary.dark'
+                              },
+                              '&.Mui-disabled': {
+                                bgcolor: 'grey.100',
+                                color: 'grey.400'
+                              }
+                            }}
                           >
                             <Plus size={16} />
                           </IconButton>
                         </Box>
+                        {/* Advertencia si excede el stock */}
+                        {item.quantity > item.stock && (
+                          <Typography
+                            variant="caption"
+                            color="error"
+                            sx={{ display: 'block', mt: 0.5 }}
+                          >
+                            Excede el stock disponible
+                          </Typography>
+                        )}
                       </TableCell>
                       <TableCell align="right">
                         <Typography sx={{ fontWeight: 'bold' }}>
-                          ${(item.price * item.quantity).toFixed(2)}
+                          ${(parseFloat(item.price || 0) * item.quantity).toFixed(2)}
                         </Typography>
                       </TableCell>
                       <TableCell align="center">
@@ -250,11 +322,14 @@ const Cart = () => {
           </Paper>
 
           {items.length > 0 && (
-            <Box sx={{ mt: 2, textAlign: 'right' }}>
+            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="body2" color="text.secondary">
+                {items.length} {items.length === 1 ? 'producto' : 'productos'} en el carrito
+              </Typography>
               <Button
                 variant="outlined"
                 color="error"
-                onClick={() => clearCart()}
+                onClick={handleClearCart}
                 startIcon={<Trash2 size={16} />}
               >
                 Vaciar carrito
@@ -270,6 +345,20 @@ const Cart = () => {
               <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 3 }}>
                 📋 Resumen de Compra
               </Typography>
+
+              {/* Advertencia de stock */}
+              {items.some(item => item.quantity > item.stock) && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  Algunos productos exceden el stock disponible. Ajusta las cantidades para continuar.
+                </Alert>
+              )}
+
+              {/* Advertencia de stock bajo */}
+              {items.some(item => item.stock < 5 && item.stock > 0) && (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  Algunos productos tienen stock limitado. ¡Completa tu compra pronto!
+                </Alert>
+              )}
 
               <Box sx={{ mb: 2 }}>
                 <Box
@@ -339,14 +428,25 @@ const Cart = () => {
                 variant="contained"
                 size="large"
                 onClick={handleCheckout}
-                loading={loading}
-                disabled={items.length === 0 || loading}
+                disabled={
+                  items.length === 0 ||
+                  loading ||
+                  items.some(item => item.quantity > item.stock) ||
+                  items.some(item => item.stock === 0)
+                }
                 sx={{
-                  backgroundColor: '#667eea',
+                  backgroundColor: items.some(item => item.quantity > item.stock) ? 'grey.400' : '#667eea',
                   mb: 2,
+                  '&:hover': {
+                    backgroundColor: items.some(item => item.quantity > item.stock) ? 'grey.500' : '#5568d3',
+                  }
                 }}
               >
-                {isAuthenticated ? 'Proceder al Checkout' : 'Iniciar Sesión'}
+                {!isAuthenticated
+                  ? 'Iniciar Sesión'
+                  : items.some(item => item.quantity > item.stock)
+                  ? 'Ajusta las cantidades'
+                  : 'Proceder al Checkout'}
               </Button>
 
               <Button

@@ -37,6 +37,13 @@ const OrderItem = sequelize.define('OrderItem', {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: false,
     defaultValue: 0
+  },
+  // Alias virtual para compatibilidad con el frontend
+  price: {
+    type: DataTypes.VIRTUAL,
+    get() {
+      return this.getDataValue('unitPrice');
+    }
   }
 }, {
   hooks: {

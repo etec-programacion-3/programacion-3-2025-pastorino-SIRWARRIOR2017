@@ -37,7 +37,7 @@ const orderRoutes = require('./routes/orders');
 const orderItemRoutes = require('./routes/orderItems');
 const serviceRequestRoutes = require('./routes/serviceRequests');
 const cartRoutes = require('./routes/cart');
-const timeSlotRoutes = require('./routes/timeSlots');
+const siteSettingsRoutes = require('./routes/siteSettings');
 
 // ============ RUTAS BÁSICAS ============
 app.get('/', (req, res) => {
@@ -80,7 +80,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/order-items', orderItemRoutes);
 app.use('/api/service-requests', serviceRequestRoutes);
 app.use('/api/cart', cartRoutes);
-app.use('/api/time-slots', timeSlotRoutes);
+app.use('/api/site-settings', siteSettingsRoutes);
 
 // 404 Handler
 app.use('*', (req, res) => {
