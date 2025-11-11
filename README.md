@@ -1,6 +1,6 @@
 # PC Store - E-commerce de Componentes de PC
 
-Sistema completo de e-commerce para venta de componentes de computadoras con panel de administración, carrito de compras y sistema de servicio técnico.
+Sistema completo de e-commerce para venta de componentes de computadoras con panel de administración, carrito de compras y contacto de servicio técnico.
 
 ---
 
