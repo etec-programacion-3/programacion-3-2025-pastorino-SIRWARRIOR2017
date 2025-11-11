@@ -78,9 +78,9 @@ api.interceptors.response.use(
   }
 );
 
-export const getProducts = async () => {
+export const getProducts = async (params) => {
   try {
-    const response = await api.get('/products');
+    const response = await api.get('/products', { params });
     return response.data;
   } catch (error) {
     throw new Error('Error al obtener los productos');

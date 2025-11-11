@@ -83,15 +83,16 @@ const Checkout = () => {
     }
 
     if (activeStep === 2) {
-      // Validar número de tarjeta con algoritmo de Luhn
+      // MODO SIMULACIÓN - Validación simplificada para desarrollo
       const cardNumberClean = formData.cardNumber.replace(/\s/g, '');
+
+      // Solo validar formato básico (entre 13 y 19 dígitos)
       if (!cardNumberClean) {
         newErrors.cardNumber = 'El número de tarjeta es requerido';
       } else if (!/^\d{13,19}$/.test(cardNumberClean)) {
         newErrors.cardNumber = 'El número de tarjeta debe tener entre 13 y 19 dígitos';
-      } else if (!validateCardNumber(cardNumberClean)) {
-        newErrors.cardNumber = 'El número de tarjeta no es válido';
       }
+      // ✅ ALGORITMO DE LUHN DESHABILITADO PARA SIMULACIÓN
 
       // Validar nombre en la tarjeta
       if (!formData.cardName.trim()) {
@@ -100,31 +101,26 @@ const Checkout = () => {
         newErrors.cardName = 'El nombre debe tener al menos 3 caracteres';
       }
 
-      // Validar fecha de vencimiento (MM/YY)
+      // Validar fecha de vencimiento (MM/YY) - Simplificada
       if (!formData.expiryDate) {
         newErrors.expiryDate = 'La fecha de vencimiento es requerida';
       } else if (!/^\d{2}\/\d{2}$/.test(formData.expiryDate)) {
         newErrors.expiryDate = 'Formato inválido (MM/AA)';
       } else {
-        const [month, year] = formData.expiryDate.split('/');
-        const currentYear = new Date().getFullYear() % 100;
-        const currentMonth = new Date().getMonth() + 1;
-
+        const [month] = formData.expiryDate.split('/');
         if (parseInt(month) < 1 || parseInt(month) > 12) {
           newErrors.expiryDate = 'Mes inválido';
-        } else if (parseInt(year) < currentYear || (parseInt(year) === currentYear && parseInt(month) < currentMonth)) {
-          newErrors.expiryDate = 'Tarjeta vencida';
         }
+        // ✅ VALIDACIÓN DE FECHA VENCIDA DESHABILITADA PARA SIMULACIÓN
       }
 
-      // Validar CVV con detección de tipo de tarjeta
-      const cardType = detectCardType(cardNumberClean);
+      // Validar CVV - Simplificado (solo formato)
       if (!formData.cvv) {
         newErrors.cvv = 'El CVV es requerido';
-      } else if (!validateCVV(formData.cvv, cardType)) {
-        const expectedLength = cardType === 'amex' ? 4 : 3;
-        newErrors.cvv = `CVV inválido (debe tener ${expectedLength} dígitos)`;
+      } else if (!/^\d{3,4}$/.test(formData.cvv)) {
+        newErrors.cvv = 'CVV inválido (3 o 4 dígitos)';
       }
+      // ✅ VALIDACIÓN DE CVV POR TIPO DE TARJETA DESHABILITADA PARA SIMULACIÓN
     }
 
     setErrors(newErrors);
@@ -210,7 +206,23 @@ const Checkout = () => {
       toast.success('¡Orden creada exitosamente!');
     } catch (error) {
       console.error('Error creating order:', error);
-      toast.error(error.response?.data?.error || 'Error al crear la orden');
+      console.error('Error details:', error.response?.data);
+
+      // Mostrar detalles de validación si existen
+      if (error.response?.data?.details) {
+        const details = error.response.data.details;
+        // Si details es un array, mapearlo. Si es un string, mostrarlo directamente
+        if (Array.isArray(details)) {
+          const validationErrors = details
+            .map(err => `${err.field}: ${err.message}`)
+            .join(', ');
+          toast.error(`Error de validación: ${validationErrors}`);
+        } else {
+          toast.error(`Error: ${details}`);
+        }
+      } else {
+        toast.error(error.response?.data?.error || 'Error al crear la orden');
+      }
     } finally {
       setLoading(false);
     }
@@ -357,8 +369,9 @@ const Checkout = () => {
             <Typography variant="h6" gutterBottom>
               Método de Pago
             </Typography>
-            <Alert severity="info" sx={{ mb: 3 }}>
-              Ingresa los datos de tu tarjeta de crédito o débito de forma segura.
+            <Alert severity="warning" sx={{ mb: 3 }}>
+              <strong>MODO SIMULACIÓN:</strong> Puedes ingresar cualquier número de tarjeta de 13-19 dígitos.
+              Ejemplo: 1234 5678 9012 3456
             </Alert>
             <Grid container spacing={3} sx={{ mt: 1 }}>
               <Grid item xs={12}>

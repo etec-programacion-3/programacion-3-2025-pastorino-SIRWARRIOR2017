@@ -17,22 +17,13 @@ const handleValidationErrors = (req, res, next) => {
 };
 
 // Validaciones para crear orden
+// NOTA: El controlador createOrder lee los items desde el carrito del usuario en la BD,
+// por lo que no se requiere el campo "items" en el body.
+// Solo se valida la dirección si se proporciona (opcional).
 const createOrder = [
-  body('items')
-    .isArray({ min: 1 }).withMessage('Debe incluir al menos un producto')
-    .custom((items) => {
-      if (!items.every(item => item.productId && item.quantity)) {
-        throw new Error('Cada item debe tener productId y quantity');
-      }
-      if (!items.every(item => Number.isInteger(item.quantity) && item.quantity > 0)) {
-        throw new Error('Las cantidades deben ser números enteros positivos');
-      }
-      return true;
-    }),
-
   body('address')
+    .optional()
     .trim()
-    .notEmpty().withMessage('La dirección de envío es requerida')
     .isLength({ min: 10, max: 500 }).withMessage('La dirección debe tener entre 10 y 500 caracteres')
     .escape(),
 
