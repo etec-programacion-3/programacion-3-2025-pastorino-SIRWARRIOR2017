@@ -8,7 +8,6 @@ require('dotenv').config();
 
 const { sequelize, testConnection } = require('./config/database');
 const models = require('./models');
-const passport = require('./config/passport');
 const logger = require('./utils/logger');
 
 const app = express();
@@ -72,9 +71,6 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Inicializar Passport
-app.use(passport.initialize());
 
 // Servir archivos estáticos (imágenes de productos)
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
