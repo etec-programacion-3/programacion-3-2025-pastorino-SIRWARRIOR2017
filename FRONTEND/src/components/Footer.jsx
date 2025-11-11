@@ -22,9 +22,11 @@ import {
   ArrowRight
 } from 'lucide-react';
 import SiteConfigContext from '../contexts/SiteConfigContext';
+import AuthContext from '../contexts/AuthContext';
 
 const Footer = () => {
   const { config } = useContext(SiteConfigContext);
+  const { isAuthenticated, user } = useContext(AuthContext);
   const currentYear = new Date().getFullYear();
 
   const footerLinks = {
@@ -32,19 +34,15 @@ const Footer = () => {
       { label: 'Catálogo Completo', path: '/products' },
       { label: 'Componentes', path: '/products?category=1' },
       { label: 'Periféricos', path: '/products?category=2' },
-      { label: 'Ofertas', path: '/products' },
     ],
     servicios: [
       { label: 'Servicio Técnico', path: '/technical-service' },
-      { label: 'Garantías', path: '/technical-service' },
       { label: 'Soporte', path: '/technical-service' },
-      { label: 'Envíos', path: '/technical-service' },
     ],
     cuenta: [
-      { label: 'Mi Perfil', path: '/profile' },
-      { label: 'Mis Órdenes', path: '/orders' },
       { label: 'Carrito', path: '/cart' },
       { label: 'Iniciar Sesión', path: '/login' },
+      { label: 'Registrarse', path: '/register' },
     ],
   };
 
@@ -227,36 +225,38 @@ const Footer = () => {
             </Stack>
           </Grid>
 
-          <Grid item xs={6} sm={4} md={2}>
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, fontSize: '1rem' }}>
-              Mi Cuenta
-            </Typography>
-            <Stack spacing={1.5}>
-              {footerLinks.cuenta.map((link) => (
-                <Link
-                  key={link.label}
-                  component={RouterLink}
-                  to={link.path}
-                  sx={{
-                    color: alpha('#ffffff', 0.7),
-                    textDecoration: 'none',
-                    fontSize: '0.875rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 0.5,
-                    transition: 'all 0.2s',
-                    '&:hover': {
-                      color: '#60a5fa',
-                      transform: 'translateX(4px)',
-                    },
-                  }}
-                >
-                  <ArrowRight size={14} />
-                  {link.label}
-                </Link>
-              ))}
-            </Stack>
-          </Grid>
+          {!isAuthenticated && (
+            <Grid item xs={6} sm={4} md={2}>
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, fontSize: '1rem' }}>
+                Mi Cuenta
+              </Typography>
+              <Stack spacing={1.5}>
+                {footerLinks.cuenta.map((link) => (
+                  <Link
+                    key={link.label}
+                    component={RouterLink}
+                    to={link.path}
+                    sx={{
+                      color: alpha('#ffffff', 0.7),
+                      textDecoration: 'none',
+                      fontSize: '0.875rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.5,
+                      transition: 'all 0.2s',
+                      '&:hover': {
+                        color: '#60a5fa',
+                        transform: 'translateX(4px)',
+                      },
+                    }}
+                  >
+                    <ArrowRight size={14} />
+                    {link.label}
+                  </Link>
+                ))}
+              </Stack>
+            </Grid>
+          )}
 
           {/* Contact Info */}
           <Grid item xs={12} sm={12} md={2}>

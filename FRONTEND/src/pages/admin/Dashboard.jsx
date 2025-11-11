@@ -12,7 +12,6 @@ import {
 import {
   Package,
   ShoppingCart,
-  Wrench,
   Users,
   BarChart3,
   Settings
@@ -35,13 +34,6 @@ const Dashboard = () => {
       icon: <ShoppingCart size={48} />,
       path: '/admin/orders',
       color: '#388e3c'
-    },
-    {
-      title: 'Solicitudes de Servicio',
-      description: 'Gestionar solicitudes de servicio técnico',
-      icon: <Wrench size={48} />,
-      path: '/admin/service-requests',
-      color: '#f57c00'
     },
     {
       title: 'Gestión de Usuarios',

@@ -50,6 +50,10 @@ const SiteSettings = sequelize.define('SiteSettings', {
     type: DataTypes.TEXT,
     allowNull: true
   },
+  googleMapsUrl: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
 
   // Redes sociales
   facebook: {

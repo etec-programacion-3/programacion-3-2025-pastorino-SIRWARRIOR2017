@@ -13,6 +13,7 @@ export const SiteConfigProvider = ({ children }) => {
     email: '',
     phone: '',
     address: '',
+    googleMapsUrl: '',
     facebook: '',
     instagram: '',
     twitter: '',

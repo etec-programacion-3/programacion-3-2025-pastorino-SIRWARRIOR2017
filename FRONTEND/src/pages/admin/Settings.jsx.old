@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Container,
   Box,
@@ -17,10 +17,8 @@ import {
 import { Save, Upload, Image as ImageIcon, Palette, Mail, Phone, MapPin, Facebook, Instagram, Twitter } from 'lucide-react';
 import toast from 'react-hot-toast';
 import * as api from '../../services/api';
-import SiteConfigContext from '../../contexts/SiteConfigContext';
 
 const Settings = () => {
-  const { refreshConfig } = useContext(SiteConfigContext);
   const [settings, setSettings] = useState({
     siteName: '',
     siteSlogan: '',
@@ -30,7 +28,6 @@ const Settings = () => {
     email: '',
     phone: '',
     address: '',
-    googleMapsUrl: '',
     facebook: '',
     instagram: '',
     twitter: '',
@@ -52,7 +49,6 @@ const Settings = () => {
   const fetchSettings = async () => {
     try {
       const data = await api.getSiteSettings();
-      console.log('Settings loaded:', data);
       setSettings(data);
       if (data.logo) {
         setLogoPreview(`http://localhost:3000${data.logo}`);
@@ -93,20 +89,16 @@ const Settings = () => {
       }
 
       // Guardar configuración general
-      const savedSettings = await api.updateSiteSettings(updatedSettings);
-      console.log('Settings saved:', savedSettings);
+      await api.updateSiteSettings(updatedSettings);
 
       toast.success('Configuración guardada exitosamente');
       setSaved(true);
       setLogoFile(null);
 
-      // Actualizar el contexto global
-      await refreshConfig();
-
       // Recargar para ver cambios
       setTimeout(() => {
         window.location.reload();
-      }, 1500);
+      }, 1000);
     } catch (err) {
       console.error('Error saving settings:', err);
       toast.error(err.message || 'Error al guardar la configuración');
@@ -143,7 +135,7 @@ const Settings = () => {
               <TextField
                 fullWidth
                 label="Nombre del Sitio"
-                value={settings.siteName || ''}
+                value={settings.siteName}
                 onChange={(e) => handleChange('siteName', e.target.value)}
                 helperText="Este nombre aparecerá en el header y footer"
               />
@@ -151,7 +143,7 @@ const Settings = () => {
               <TextField
                 fullWidth
                 label="Slogan"
-                value={settings.siteSlogan || ''}
+                value={settings.siteSlogan}
                 onChange={(e) => handleChange('siteSlogan', e.target.value)}
                 helperText="Frase descriptiva de tu tienda"
               />
@@ -195,6 +187,89 @@ const Settings = () => {
           </Paper>
         </Grid>
 
+        {/* Colores del Tema */}
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3, height: '100%' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+              <Palette size={24} color="#764ba2" />
+              <Typography variant="h6" fontWeight="bold">Colores del Tema</Typography>
+            </Box>
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <Box>
+                <Typography variant="subtitle2" gutterBottom fontWeight="600">
+                  Color Primario
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                  <input
+                    type="color"
+                    value={settings.primaryColor}
+                    onChange={(e) => handleChange('primaryColor', e.target.value)}
+                    style={{ width: 60, height: 40, border: '1px solid #ddd', borderRadius: 4, cursor: 'pointer' }}
+                  />
+                  <TextField
+                    size="small"
+                    value={settings.primaryColor}
+                    onChange={(e) => handleChange('primaryColor', e.target.value)}
+                    sx={{ flex: 1 }}
+                  />
+                </Box>
+                <Typography variant="caption" color="text.secondary">
+                  Botones, enlaces y elementos destacados
+                </Typography>
+              </Box>
+
+              <Box>
+                <Typography variant="subtitle2" gutterBottom fontWeight="600">
+                  Color Secundario
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                  <input
+                    type="color"
+                    value={settings.secondaryColor}
+                    onChange={(e) => handleChange('secondaryColor', e.target.value)}
+                    style={{ width: 60, height: 40, border: '1px solid #ddd', borderRadius: 4, cursor: 'pointer' }}
+                  />
+                  <TextField
+                    size="small"
+                    value={settings.secondaryColor}
+                    onChange={(e) => handleChange('secondaryColor', e.target.value)}
+                    sx={{ flex: 1 }}
+                  />
+                </Box>
+                <Typography variant="caption" color="text.secondary">
+                  Gradientes y elementos secundarios
+                </Typography>
+              </Box>
+
+              <Divider />
+
+              {/* Preview de colores */}
+              <Card variant="outlined">
+                <CardContent>
+                  <Typography variant="subtitle2" gutterBottom fontWeight="600">
+                    Vista Previa
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+                    <Button
+                      variant="contained"
+                      sx={{ backgroundColor: settings.primaryColor }}
+                    >
+                      Botón Primario
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      sx={{ borderColor: settings.secondaryColor, color: settings.secondaryColor }}
+                    >
+                      Secundario
+                    </Button>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Box>
+          </Paper>
+        </Grid>
+
         {/* Información de Contacto */}
         <Grid item xs={12} md={6}>
           <Paper sx={{ p: 3 }}>
@@ -208,7 +283,7 @@ const Settings = () => {
                 fullWidth
                 label="Email de Contacto"
                 type="email"
-                value={settings.email || ''}
+                value={settings.email}
                 onChange={(e) => handleChange('email', e.target.value)}
                 InputProps={{
                   startAdornment: (
@@ -222,7 +297,7 @@ const Settings = () => {
               <TextField
                 fullWidth
                 label="Teléfono"
-                value={settings.phone || ''}
+                value={settings.phone}
                 onChange={(e) => handleChange('phone', e.target.value)}
                 InputProps={{
                   startAdornment: (
@@ -238,24 +313,8 @@ const Settings = () => {
                 label="Dirección"
                 multiline
                 rows={2}
-                value={settings.address || ''}
+                value={settings.address}
                 onChange={(e) => handleChange('address', e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <MapPin size={18} />
-                    </InputAdornment>
-                  ),
-                }}
-              />
-
-              <TextField
-                fullWidth
-                label="URL de Google Maps"
-                placeholder="https://maps.app.goo.gl/..."
-                value={settings.googleMapsUrl || ''}
-                onChange={(e) => handleChange('googleMapsUrl', e.target.value)}
-                helperText="Comparte tu ubicación en Google Maps y pega el enlace aquí"
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -281,7 +340,7 @@ const Settings = () => {
                 fullWidth
                 label="Facebook"
                 placeholder="https://facebook.com/tutienda"
-                value={settings.facebook || ''}
+                value={settings.facebook}
                 onChange={(e) => handleChange('facebook', e.target.value)}
                 InputProps={{
                   startAdornment: (
@@ -296,7 +355,7 @@ const Settings = () => {
                 fullWidth
                 label="Instagram"
                 placeholder="https://instagram.com/tutienda"
-                value={settings.instagram || ''}
+                value={settings.instagram}
                 onChange={(e) => handleChange('instagram', e.target.value)}
                 InputProps={{
                   startAdornment: (
@@ -311,7 +370,7 @@ const Settings = () => {
                 fullWidth
                 label="Twitter"
                 placeholder="https://twitter.com/tutienda"
-                value={settings.twitter || ''}
+                value={settings.twitter}
                 onChange={(e) => handleChange('twitter', e.target.value)}
                 InputProps={{
                   startAdornment: (
@@ -337,7 +396,7 @@ const Settings = () => {
                 <TextField
                   fullWidth
                   label="Símbolo de Moneda"
-                  value={settings.currency || '$'}
+                  value={settings.currency}
                   onChange={(e) => handleChange('currency', e.target.value)}
                   helperText="Ej: $, €, USD"
                 />
@@ -348,8 +407,8 @@ const Settings = () => {
                   fullWidth
                   label="Tasa de Impuesto (%)"
                   type="number"
-                  value={settings.taxRate || 0}
-                  onChange={(e) => handleChange('taxRate', parseFloat(e.target.value) || 0)}
+                  value={settings.taxRate}
+                  onChange={(e) => handleChange('taxRate', parseFloat(e.target.value))}
                   inputProps={{ min: 0, max: 100, step: 0.1 }}
                 />
               </Grid>
@@ -357,10 +416,10 @@ const Settings = () => {
               <Grid item xs={12} sm={6} md={3}>
                 <TextField
                   fullWidth
-                  label={`Costo de Envío (${settings.currency || '$'})`}
+                  label={`Costo de Envío (${settings.currency})`}
                   type="number"
-                  value={settings.shippingCost || 0}
-                  onChange={(e) => handleChange('shippingCost', parseFloat(e.target.value) || 0)}
+                  value={settings.shippingCost}
+                  onChange={(e) => handleChange('shippingCost', parseFloat(e.target.value))}
                   inputProps={{ min: 0, step: 10 }}
                 />
               </Grid>
@@ -368,10 +427,10 @@ const Settings = () => {
               <Grid item xs={12} sm={6} md={3}>
                 <TextField
                   fullWidth
-                  label={`Envío Gratis desde (${settings.currency || '$'})`}
+                  label={`Envío Gratis desde (${settings.currency})`}
                   type="number"
-                  value={settings.freeShippingThreshold || 0}
-                  onChange={(e) => handleChange('freeShippingThreshold', parseFloat(e.target.value) || 0)}
+                  value={settings.freeShippingThreshold}
+                  onChange={(e) => handleChange('freeShippingThreshold', parseFloat(e.target.value))}
                   inputProps={{ min: 0, step: 100 }}
                 />
               </Grid>
