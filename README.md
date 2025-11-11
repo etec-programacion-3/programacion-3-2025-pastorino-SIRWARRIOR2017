@@ -72,7 +72,7 @@ NODE_ENV=development
 LOG_LEVEL=debug
 ```
 
-**⚠️ IMPORTANTE:** Nunca uses el valor por defecto de `JWT_SECRET` en producción. Genera uno seguro:
+**IMPORTANTE:** Nunca uses el valor por defecto de `JWT_SECRET` en producción. Genera uno seguro:
 ```bash
 node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ```
