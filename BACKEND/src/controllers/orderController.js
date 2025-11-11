@@ -1,3 +1,5 @@
+const logger = require('../utils/logger');
+
 const { Order, OrderItem, CartItem, Product, User, sequelize } = require('../models');
 
 module.exports = {
@@ -37,7 +39,7 @@ module.exports = {
 
       res.json(orders);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       res.status(500).json({ error: 'Cannot fetch orders', details: err.message });
     }
   },
@@ -75,7 +77,7 @@ module.exports = {
 
       res.json(order);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       res.status(500).json({ error: 'Cannot fetch order', details: err.message });
     }
   },
@@ -94,16 +96,26 @@ module.exports = {
         return res.status(400).json({ error: 'Cart is empty' });
       }
 
-      // Verificar stock disponible
+      // Verificar stock disponible y precio válido
       for (const ci of cartItems) {
         const product = ci.Product || (await Product.findByPk(ci.productId, { transaction: t, lock: t.LOCK.UPDATE }));
         if (!product) {
           await t.rollback();
           return res.status(400).json({ error: `Product not found: ${ci.productId}` });
         }
+
+        // Validar que el producto tenga un precio válido
+        const price = parseFloat(product.price);
+        if (!product.price || isNaN(price) || price <= 0) {
+          await t.rollback();
+          return res.status(400).json({
+            error: `Product "${product.name}" (ID: ${product.id}) has invalid price. Please remove it from cart.`
+          });
+        }
+
         if (product.stock < ci.quantity) {
           await t.rollback();
-          return res.status(400).json({ error: `Insufficient stock for product ${product.id}` });
+          return res.status(400).json({ error: `Insufficient stock for product ${product.name}` });
         }
       }
 
@@ -111,6 +123,10 @@ module.exports = {
       let total = 0;
       for (const ci of cartItems) {
         const price = parseFloat(ci.Product.price);
+        if (isNaN(price)) {
+          await t.rollback();
+          return res.status(400).json({ error: 'Invalid price detected in cart' });
+        }
         total += price * ci.quantity;
       }
 
@@ -143,8 +159,10 @@ module.exports = {
       await t.commit();
       res.status(201).json({ orderId: order.id, orderNumber: order.orderNumber });
     } catch (err) {
-      console.error('Checkout error', err);
-      try { await t.rollback(); } catch (e) { console.error('Rollback failed', e); }
+      logger.error('Checkout error:', err.message);
+      logger.error('Error stack:', err.stack);
+      logger.error('Error details:', JSON.stringify(err, null, 2));
+      try { await t.rollback(); } catch (e) { logger.error('Rollback failed', e); }
       res.status(500).json({ error: 'Checkout failed', details: err.message });
     }
   },
@@ -186,7 +204,7 @@ module.exports = {
 
       res.json(updatedOrder);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       res.status(500).json({ error: 'Cannot update order', details: err.message });
     }
   },
@@ -237,7 +255,7 @@ module.exports = {
         throw err;
       }
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       res.status(500).json({ error: 'Cannot cancel order', details: err.message });
     }
   }

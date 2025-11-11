@@ -1,5 +1,6 @@
 const { Product, Category } = require('../models');
 const { Op } = require('sequelize');
+const logger = require('../utils/logger');
 
 module.exports = {
   // GET - Obtener todos los productos con filtros y paginación
@@ -53,8 +54,9 @@ module.exports = {
         }
       });
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'Cannot fetch products', details: err.message });
+      logger.error('Error fetching products:', err);
+      const message = process.env.NODE_ENV === 'production' ? 'Cannot fetch products' : err.message;
+      res.status(500).json({ error: 'Cannot fetch products', details: message });
     }
   },
 
@@ -72,8 +74,9 @@ module.exports = {
 
       res.json(product);
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'Cannot fetch product', details: err.message });
+      logger.error('Error fetching product:', err);
+      const message = process.env.NODE_ENV === 'production' ? 'Cannot fetch product' : err.message;
+      res.status(500).json({ error: 'Cannot fetch product', details: message });
     }
   },
 
@@ -103,13 +106,24 @@ module.exports = {
         imageUrl = `/uploads/products/${req.file.filename}`;
       }
 
+      // Parsear especificaciones de forma segura
+      let parsedSpecifications = {};
+      if (specifications) {
+        try {
+          parsedSpecifications = JSON.parse(specifications);
+        } catch (parseError) {
+          logger.error('Error parsing specifications:', parseError);
+          return res.status(400).json({ error: 'Invalid specifications format. Must be valid JSON.' });
+        }
+      }
+
       const product = await Product.create({
         name,
         description,
         price,
         stock: stock || 0,
         categoryId,
-        specifications: specifications ? JSON.parse(specifications) : {},
+        specifications: parsedSpecifications,
         images: imageUrl ? [imageUrl] : [],
         brand,
         model,
@@ -118,8 +132,9 @@ module.exports = {
 
       res.status(201).json(product);
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'Cannot create product', details: err.message });
+      logger.error('Error creating product:', err);
+      const message = process.env.NODE_ENV === 'production' ? 'Cannot create product' : err.message;
+      res.status(500).json({ error: 'Cannot create product', details: message });
     }
   },
 
@@ -174,7 +189,7 @@ module.exports = {
 
       res.json(product);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       res.status(500).json({ error: 'Cannot update product', details: err.message });
     }
   },
@@ -221,7 +236,7 @@ module.exports = {
         hardDelete: true
       });
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       res.status(500).json({ error: 'Cannot delete product', details: err.message });
     }
   },
@@ -246,7 +261,7 @@ module.exports = {
 
       res.json(product);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       res.status(500).json({ error: 'Cannot update stock', details: err.message });
     }
   }

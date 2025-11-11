@@ -22,7 +22,7 @@ import {
   Chip,
   alpha,
 } from '@mui/material';
-import { ShoppingCart, Eye, TrendingUp, Package } from 'lucide-react';
+import { ShoppingCart, Eye, Package } from 'lucide-react';
 import * as api from '../services/api';
 import CartContext from '../contexts/CartContext';
 
@@ -67,19 +67,19 @@ const Products = () => {
       setLoading(true);
       setError(null);
 
-      const params = new URLSearchParams({
+      const params = {
         page: page.toString(),
         limit: '12',
         sortBy,
         order: sortOrder,
-      });
+      };
 
-      if (searchTerm) params.append('search', searchTerm);
-      if (categoryId) params.append('categoryId', categoryId);
+      if (searchTerm) params.search = searchTerm;
+      if (categoryId) params.categoryId = categoryId;
 
-      const response = await api.getProducts?.() || { products: [], totalPages: 1 };
+      const response = await api.getProducts(params);
       setProducts(response.products || []);
-      setTotalPages(response.totalPages || 1);
+      setTotalPages(response.pagination?.pages || 1);
     } catch (err) {
       setError(err.message || 'Error al cargar productos');
       setProducts([]);
@@ -112,7 +112,23 @@ const Products = () => {
   };
 
   const handleSortChange = (e) => {
-    setSortBy(e.target.value);
+    const value = e.target.value;
+
+    // Manejar ordenamiento especial para precio
+    if (value === 'price-asc') {
+      setSortBy('price');
+      setSortOrder('ASC');
+    } else if (value === 'price-desc') {
+      setSortBy('price');
+      setSortOrder('DESC');
+    } else if (value === 'name') {
+      setSortBy('name');
+      setSortOrder('ASC');
+    } else {
+      setSortBy(value);
+      setSortOrder('DESC');
+    }
+
     setPage(1);
   };
 
@@ -197,9 +213,16 @@ const Products = () => {
           <Grid item xs={12} sm={6} md={3}>
             <FormControl fullWidth size="small">
               <InputLabel>Ordenar por</InputLabel>
-              <Select value={sortBy} onChange={handleSortChange} label="Ordenar por">
+              <Select
+                value={sortBy === 'price' && sortOrder === 'ASC' ? 'price-asc' :
+                       sortBy === 'price' && sortOrder === 'DESC' ? 'price-desc' :
+                       sortBy}
+                onChange={handleSortChange}
+                label="Ordenar por"
+              >
                 <MenuItem value="createdAt">Más recientes</MenuItem>
-                <MenuItem value="price">Precio: Menor a Mayor</MenuItem>
+                <MenuItem value="price-asc">Precio: Menor a Mayor</MenuItem>
+                <MenuItem value="price-desc">Precio: Mayor a Menor</MenuItem>
                 <MenuItem value="name">Nombre: A-Z</MenuItem>
                 <MenuItem value="stock">Stock disponible</MenuItem>
               </Select>
@@ -273,36 +296,7 @@ const Products = () => {
                     },
                   }}
                 >
-                  {/* Badges superiores */}
-                  {product.stock === 0 && (
-                    <Chip
-                      label="Sin stock"
-                      size="small"
-                      color="error"
-                      sx={{
-                        position: 'absolute',
-                        top: 12,
-                        left: 12,
-                        zIndex: 1,
-                        fontWeight: 600,
-                      }}
-                    />
-                  )}
-                  {product.stock > 0 && product.stock < 10 && (
-                    <Chip
-                      icon={<TrendingUp size={14} />}
-                      label="Últimas unidades"
-                      size="small"
-                      color="warning"
-                      sx={{
-                        position: 'absolute',
-                        top: 12,
-                        right: 12,
-                        zIndex: 1,
-                        fontWeight: 600,
-                      }}
-                    />
-                  )}
+                  {/* Badge de descuento en esquina superior derecha */}
                   {product.discount && (
                     <Chip
                       label={`-${product.discount}%`}
@@ -311,7 +305,7 @@ const Products = () => {
                         position: 'absolute',
                         top: 12,
                         right: 12,
-                        zIndex: 1,
+                        zIndex: 2,
                         backgroundColor: '#ef4444',
                         color: 'white',
                         fontWeight: 700,

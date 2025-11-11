@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { User } = require('../models');
+const logger = require('../utils/logger');
 
 const register = async (req, res) => {
   try {
@@ -26,10 +27,17 @@ const register = async (req, res) => {
     // Generar token JWT
     let token = null;
     try {
-      if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET not configured');
-      token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });
+      if (!process.env.JWT_SECRET) {
+        logger.error('JWT_SECRET not configured - cannot generate token');
+        throw new Error('JWT_SECRET not configured');
+      }
+      token = jwt.sign(
+        { id: user.id },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
+      );
     } catch (jwtErr) {
-      console.error('JWT generation failed for new user:', jwtErr.message);
+      logger.error('JWT generation failed for new user:', jwtErr.message);
     }
 
     const publicUser = {
@@ -45,32 +53,34 @@ const register = async (req, res) => {
 
     return res.status(201).json({ user: publicUser, warning: 'Token not generated' });
   } catch (err) {
-    console.error('Registration error:', err);
-    return res.status(500).json({ error: 'Registration failed', details: err.message });
+    logger.error('Registration error:', err);
+    const message = process.env.NODE_ENV === 'production'
+      ? 'Registration failed'
+      : err.message;
+    return res.status(500).json({ error: 'Registration failed', details: message });
   }
 };
 
 const login = async (req, res) => {
   try {
-    console.log('Login attempt:', req.body);
     const { email, password } = req.body;
 
     if (!email || !password) {
-      console.log('Missing credentials');
+      logger.debug('Login attempt with missing credentials');
       return res.status(400).json({ error: 'email and password required' });
     }
 
-    console.log('Finding user with email:', email);
+    logger.debug(`Login attempt for email: ${email}`);
     const user = await User.findOne({ where: { email } });
 
     if (!user) {
-      console.log('User not found');
+      logger.debug(`Login failed: User not found for email ${email}`);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     // Verificar si el usuario está bloqueado
     if (user.isBlocked) {
-      console.log('User is blocked');
+      logger.warn(`Login attempt for blocked user: ${email}`);
       return res.status(403).json({
         error: 'Account blocked',
         message: 'Tu cuenta ha sido bloqueada. Contacta al administrador.',
@@ -78,28 +88,31 @@ const login = async (req, res) => {
       });
     }
 
-    console.log('User found, validating password');
     try {
       const valid = await user.validatePassword(password);
-      console.log('Password validation result:', valid);
 
       if (!valid) {
-        console.log('Invalid password');
+        logger.debug(`Login failed: Invalid password for email ${email}`);
         return res.status(401).json({ error: 'Invalid credentials' });
       }
     } catch (validationError) {
-      console.error('Password validation error:', validationError);
+      logger.error('Password validation error:', validationError);
       throw validationError;
     }
 
-    console.log('Generating token');
+    // Validar que JWT_SECRET esté configurado
+    if (!process.env.JWT_SECRET) {
+      logger.error('JWT_SECRET not configured - cannot generate token');
+      return res.status(500).json({ error: 'Server configuration error' });
+    }
+
     const token = jwt.sign(
       { id: user.id },
-      process.env.JWT_SECRET || 'your-secret-key',
+      process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
     );
 
-    console.log('Login successful');
+    logger.info(`User logged in successfully: ${email}`);
     return res.json({
       user: {
         id: user.id,
@@ -110,8 +123,11 @@ const login = async (req, res) => {
       token
     });
   } catch (err) {
-    console.error('Login error:', err);
-    return res.status(500).json({ error: 'Login failed', details: err.message });
+    logger.error('Login error:', err);
+    const message = process.env.NODE_ENV === 'production'
+      ? 'Login failed'
+      : err.message;
+    return res.status(500).json({ error: 'Login failed', details: message });
   }
 };
 
@@ -122,13 +138,20 @@ const googleCallback = async (req, res) => {
     const user = req.user;
 
     if (!user) {
+      logger.warn('Google OAuth callback without user');
       return res.redirect(`${process.env.FRONTEND_URL}/login?error=authentication_failed`);
+    }
+
+    // Validar que JWT_SECRET esté configurado
+    if (!process.env.JWT_SECRET) {
+      logger.error('JWT_SECRET not configured - cannot generate token');
+      return res.redirect(`${process.env.FRONTEND_URL}/login?error=server_error`);
     }
 
     // Generar token JWT
     const token = jwt.sign(
       { id: user.id },
-      process.env.JWT_SECRET || 'your-secret-key',
+      process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
     );
 
@@ -140,11 +163,13 @@ const googleCallback = async (req, res) => {
       picture: user.picture
     };
 
+    logger.info(`User logged in via Google OAuth: ${user.email}`);
+
     // Redirigir al frontend con el token y usuario
     const userData = encodeURIComponent(JSON.stringify(publicUser));
     res.redirect(`${process.env.FRONTEND_URL}/auth/callback?token=${token}&user=${userData}`);
   } catch (error) {
-    console.error('Google callback error:', error);
+    logger.error('Google callback error:', error);
     res.redirect(`${process.env.FRONTEND_URL}/login?error=server_error`);
   }
 };

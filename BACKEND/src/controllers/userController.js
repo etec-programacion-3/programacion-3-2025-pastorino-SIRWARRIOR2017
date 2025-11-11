@@ -1,4 +1,7 @@
+const logger = require('../utils/logger');
+
 const { User, Order, ServiceRequest } = require('../models');
+const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 
 // Listar todos los usuarios (solo admin)
@@ -13,7 +16,7 @@ const getAllUsers = async (req, res) => {
 
     res.json(users);
   } catch (error) {
-    console.error('Error al obtener usuarios:', error);
+    logger.error('Error al obtener usuarios:', error);
     res.status(500).json({
       message: 'Error al obtener usuarios',
       error: error.message
@@ -57,7 +60,7 @@ const getUserById = async (req, res) => {
 
     res.json({ user, stats });
   } catch (error) {
-    console.error('Error al obtener usuario:', error);
+    logger.error('Error al obtener usuario:', error);
     res.status(500).json({
       message: 'Error al obtener usuario',
       error: error.message
@@ -103,7 +106,7 @@ const updateUserRole = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error al actualizar rol:', error);
+    logger.error('Error al actualizar rol:', error);
     res.status(500).json({
       message: 'Error al actualizar rol',
       error: error.message
@@ -148,7 +151,7 @@ const toggleBlockUser = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error al bloquear/desbloquear usuario:', error);
+    logger.error('Error al bloquear/desbloquear usuario:', error);
     res.status(500).json({
       message: 'Error al bloquear/desbloquear usuario',
       error: error.message
@@ -185,7 +188,7 @@ const deleteUser = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error al eliminar usuario:', error);
+    logger.error('Error al eliminar usuario:', error);
     res.status(500).json({
       message: 'Error al eliminar usuario',
       error: error.message
@@ -211,8 +214,8 @@ const resetUserPassword = async (req, res) => {
       });
     }
 
-    // Generar contraseña temporal
-    const tempPassword = Math.random().toString(36).slice(-8);
+    // Generar contraseña temporal segura (12 caracteres)
+    const tempPassword = crypto.randomBytes(12).toString('base64').slice(0, 12);
     user.password = tempPassword;
     await user.save();
 
@@ -226,7 +229,7 @@ const resetUserPassword = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error al resetear contraseña:', error);
+    logger.error('Error al resetear contraseña:', error);
     res.status(500).json({
       message: 'Error al resetear contraseña',
       error: error.message
@@ -275,7 +278,7 @@ const updateUser = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error al actualizar usuario:', error);
+    logger.error('Error al actualizar usuario:', error);
     res.status(500).json({
       message: 'Error al actualizar usuario',
       error: error.message

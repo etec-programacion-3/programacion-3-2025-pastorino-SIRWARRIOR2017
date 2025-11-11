@@ -1,3 +1,5 @@
+const logger = require('../utils/logger');
+
 // Controlador base para OrderItem
 module.exports = {
   getAllOrderItems: (req, res) => {

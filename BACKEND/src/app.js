@@ -1,16 +1,67 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const compression = require('compression');
 require('dotenv').config();
 
 const { sequelize, testConnection } = require('./config/database');
 const models = require('./models');
 const passport = require('./config/passport');
+const logger = require('./utils/logger');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ============ MIDDLEWARES ============
+// ============ VALIDACIÓN DE VARIABLES DE ENTORNO CRÍTICAS ============
+if (!process.env.JWT_SECRET) {
+  logger.error('FATAL: JWT_SECRET is not defined in environment variables');
+  console.error('❌ ERROR: JWT_SECRET no está configurado. El servidor no puede iniciar de forma segura.');
+  process.exit(1);
+}
+
+// ============ MIDDLEWARES DE SEGURIDAD ============
+// Helmet para headers de seguridad HTTP
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+}));
+
+// Compresión de respuestas HTTP
+app.use(compression());
+
+// Rate limiting general
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // límite de 100 requests por IP
+  message: 'Demasiadas solicitudes desde esta IP, por favor intenta de nuevo más tarde.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Rate limiting específico para autenticación (más restrictivo)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 5, // límite de 5 intentos de login
+  message: 'Demasiados intentos de inicio de sesión, por favor intenta de nuevo más tarde.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true, // no cuenta requests exitosos
+});
+
+app.use('/api/', generalLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+
+// ============ MIDDLEWARES BÁSICOS ============
 // Configurar CORS para permitir el frontend y credenciales cuando sea necesario
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 app.use(
@@ -92,11 +143,25 @@ app.use('*', (req, res) => {
 
 // ============ MANEJO DE ERRORES ============
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
-    error: 'Something went wrong!',
-    message: err.message
-  });
+  logger.error('Unhandled error:', err);
+
+  // En producción, no exponer detalles del error
+  const statusCode = err.statusCode || 500;
+  const message = process.env.NODE_ENV === 'production'
+    ? 'Something went wrong!'
+    : err.message;
+
+  const errorResponse = {
+    error: message,
+    status: statusCode
+  };
+
+  // Solo incluir stack trace en desarrollo
+  if (process.env.NODE_ENV !== 'production') {
+    errorResponse.stack = err.stack;
+  }
+
+  res.status(statusCode).json(errorResponse);
 });
 
 // ============ INICIO DEL SERVIDOR ============
@@ -104,20 +169,21 @@ const startServer = async () => {
   try {
     // Probar conexión a la base de datos
     await testConnection();
-    
+
     // Sincronizar modelos con la base de datos
-    console.log('📊 Sincronizando modelos con la base de datos...');
+    logger.info('📊 Sincronizando modelos con la base de datos...');
     await sequelize.sync({ force: false }); // force: true recrea las tablas
-    console.log('✅ Modelos sincronizados correctamente.');
-    
+    logger.info('✅ Modelos sincronizados correctamente.');
+
     // Iniciar servidor
     app.listen(PORT, () => {
-      console.log(`🚀 Servidor ejecutándose en puerto ${PORT}`);
-      console.log(`🌐 API disponible en: http://localhost:${PORT}`);
-      console.log(`🔍 Test de modelos: http://localhost:${PORT}/test-models`);
+      logger.info(`🚀 Servidor ejecutándose en puerto ${PORT}`);
+      logger.info(`🌐 API disponible en: http://localhost:${PORT}`);
+      logger.info(`🔒 Modo: ${process.env.NODE_ENV || 'development'}`);
+      logger.info(`🛡️ Seguridad: Helmet activo, Rate limiting activo`);
     });
   } catch (error) {
-    console.error('❌ Error al iniciar el servidor:', error);
+    logger.error('❌ Error al iniciar el servidor:', error);
     process.exit(1);
   }
 };

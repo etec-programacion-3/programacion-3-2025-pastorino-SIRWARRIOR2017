@@ -1,10 +1,15 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000/api';
+// Usar variables de entorno con fallback para desarrollo
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
+  timeout: 30000, // 30 segundos timeout
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
 // Attach token from localStorage on each request if present
@@ -21,10 +26,33 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Interceptor para detectar usuarios bloqueados
+// Retry logic con exponential backoff
+const retryRequest = async (error) => {
+  const config = error.config;
+
+  // No reintentar si ya se intentó el máximo de veces o si es un error del cliente (4xx)
+  if (!config || config.__retryCount >= 3 || (error.response && error.response.status < 500)) {
+    return Promise.reject(error);
+  }
+
+  config.__retryCount = config.__retryCount || 0;
+  config.__retryCount += 1;
+
+  // Exponential backoff: 1s, 2s, 4s
+  const backoff = new Promise((resolve) => {
+    setTimeout(() => {
+      resolve();
+    }, 1000 * Math.pow(2, config.__retryCount - 1));
+  });
+
+  await backoff;
+  return api(config);
+};
+
+// Interceptor para detectar usuarios bloqueados y manejar errores
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     // Si el error es 403 y el mensaje indica cuenta bloqueada
     if (error.response?.status === 403 && error.response?.data?.error === 'Account blocked') {
       // Emitir evento personalizado para que AuthContext lo detecte
@@ -34,14 +62,25 @@ api.interceptors.response.use(
           reason: error.response.data.reason
         }
       }));
+      return Promise.reject(error);
     }
+
+    // Reintentar en caso de error de red o error 5xx
+    if (!error.response || error.response.status >= 500) {
+      try {
+        return await retryRequest(error);
+      } catch (retryError) {
+        return Promise.reject(retryError);
+      }
+    }
+
     return Promise.reject(error);
   }
 );
 
-export const getProducts = async () => {
+export const getProducts = async (params) => {
   try {
-    const response = await api.get('/products');
+    const response = await api.get('/products', { params });
     return response.data;
   } catch (error) {
     throw new Error('Error al obtener los productos');
