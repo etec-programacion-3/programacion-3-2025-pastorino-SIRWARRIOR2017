@@ -21,8 +21,7 @@ import {
   DollarSign,
   ShoppingCart,
   Package,
-  Users,
-  Wrench
+  Users
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -67,8 +66,7 @@ const Reports = () => {
     totalOrders: 0,
     totalProducts: 0,
     totalUsers: 0,
-    pendingOrders: 0,
-    serviceRequests: 0
+    pendingOrders: 0
   });
   const [recentOrders, setRecentOrders] = useState([]);
   const [topProducts, setTopProducts] = useState([]);
@@ -97,10 +95,6 @@ const Reports = () => {
       const usersRes = await axios.get(`${API_BASE_URL}/users`, config);
       const users = usersRes.data || [];
 
-      // Fetch solicitudes de servicio
-      const serviceReqRes = await axios.get(`${API_BASE_URL}/service-requests`, config);
-      const serviceRequests = serviceReqRes.data || [];
-
       // Calcular estadísticas
       const totalRevenue = orders
         .filter(o => o.status !== 'cancelled')
@@ -113,8 +107,7 @@ const Reports = () => {
         totalOrders: orders.length,
         totalProducts: products.length,
         totalUsers: users.length,
-        pendingOrders: pendingOrders,
-        serviceRequests: serviceRequests.filter(sr => sr.status === 'pending').length
+        pendingOrders: pendingOrders
       });
 
       // Órdenes recientes (últimas 5)
@@ -178,11 +171,11 @@ const Reports = () => {
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
           <StatCard
-            title="Órdenes Totales"
-            value={stats.totalOrders}
+            title="Órdenes Pendientes"
+            value={stats.pendingOrders}
             icon={ShoppingCart}
-            color="#2196f3"
-            subtitle={`${stats.pendingOrders} pendientes`}
+            color="#ff9800"
+            subtitle={`De ${stats.totalOrders} órdenes totales`}
           />
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
@@ -190,7 +183,7 @@ const Reports = () => {
             title="Productos en Catálogo"
             value={stats.totalProducts}
             icon={Package}
-            color="#ff9800"
+            color="#2196f3"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
@@ -199,14 +192,6 @@ const Reports = () => {
             value={stats.totalUsers}
             icon={Users}
             color="#9c27b0"
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={4}>
-          <StatCard
-            title="Servicios Pendientes"
-            value={stats.serviceRequests}
-            icon={Wrench}
-            color="#f44336"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={4}>

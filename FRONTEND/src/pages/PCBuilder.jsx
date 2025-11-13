@@ -161,19 +161,6 @@ const PCBuilder = () => {
       }
     }
 
-    // Validar PSU wattage
-    if (components.psu) {
-      const totalTDP = calculateTotalTDP(components);
-      const psuWattage = components.psu.specifications?.wattage || 0;
-      const recommendedWattage = totalTDP * 1.5; // 50% overhead
-
-      if (psuWattage < recommendedWattage) {
-        issues.push({
-          type: 'warning',
-          message: `Fuente de poder recomendada: ${Math.ceil(recommendedWattage)}W (actual: ${psuWattage}W)`
-        });
-      }
-    }
 
     setCompatibilityIssues(issues);
   };
@@ -557,14 +544,17 @@ const PCBuilder = () => {
                         </Typography>
                         {product.specifications && (
                           <Box sx={{ display: 'flex', gap: 1, mt: 0.5, flexWrap: 'wrap' }}>
-                            {Object.entries(product.specifications).slice(0, 3).map(([key, value]) => (
-                              <Chip
-                                key={key}
-                                label={`${key}: ${value}`}
-                                size="small"
-                                variant="outlined"
-                              />
-                            ))}
+                            {Object.entries(product.specifications)
+                              .filter(([key]) => key !== 'section')
+                              .slice(0, 3)
+                              .map(([key, value]) => (
+                                <Chip
+                                  key={key}
+                                  label={`${key}: ${value}`}
+                                  size="small"
+                                  variant="outlined"
+                                />
+                              ))}
                           </Box>
                         )}
                       </Box>
