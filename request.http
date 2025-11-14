@@ -39,9 +39,6 @@ Content-Type: application/json
   "password": "password123"
 }
 
-### Google OAuth (abrir en navegador)
-# GET {{baseUrl}}/api/auth/google
-
 
 ################################################################################
 ### PRODUCTS - PRODUCTOS
