@@ -1,8 +1,8 @@
 ### PC Store Backend API - Pruebas HTTP
 ### Base URL
 @baseUrl = http://localhost:3000
-@token = your_jwt_token_here
-@adminToken = your_admin_jwt_token_here
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwiaWF0IjoxNzYzMTI3MTMyLCJleHAiOjE3NjMyMTM1MzJ9.UPc-VpXQRzACHa1yuf4D6nCaY8dT6f8T_PseWnnwxsU
+@adminToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwiaWF0IjoxNzYzMTI3MTMyLCJleHAiOjE3NjMyMTM1MzJ9.UPc-VpXQRzACHa1yuf4D6nCaY8dT6f8T_PseWnnwxsU
 
 ################################################################################
 ### HEALTH CHECK & INFO

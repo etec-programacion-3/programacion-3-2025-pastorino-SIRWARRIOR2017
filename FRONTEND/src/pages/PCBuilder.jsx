@@ -43,7 +43,7 @@ import * as api from '../services/api';
 import CartContext from '../contexts/CartContext';
 
 const COMPONENT_TYPES = [
-  { id: 'cpu', name: 'Procesador', icon: Cpu, categoryNames: ['Procesadores'], required: true },
+  { id: 'cpu', name: 'Procesador', icon: Cpu, categoryNames: ['Procesadores (CPU)', 'Procesadores', 'CPU'], required: true },
   { id: 'motherboard', name: 'Placa Madre', icon: CircuitBoard, categoryNames: ['Placas Madre', 'Motherboard'], required: true },
   { id: 'ram', name: 'Memoria RAM', icon: MemoryStick, categoryNames: ['Memoria RAM', 'RAM'], required: true },
   { id: 'storage', name: 'Almacenamiento', icon: HardDrive, categoryNames: ['Almacenamiento', 'Disco (SSD, HDD, M.2)'], required: true },
